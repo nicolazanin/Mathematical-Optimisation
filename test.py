@@ -1,10 +1,16 @@
 import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+import gurobipy as gp
+from gurobipy import GRB
+
 
 from utilis.init_dataset import (cells_generation, nodes_generation, get_pop_cells_near_airports, get_pop_density,
                                  nodes_distances, grid_dimensions)
 from utilis.preprocessing import create_threshold_graph
 from utilis.init_model import get_all_simple_path_to_destinations, get_pop_paths
 from utilis.plot import plot_dataset, plot_possible_paths
+from utilis.EACN_REG_model import EACN_REG
 
 # To achieve maximum scalability, the grid is built using the number of cells along the X and Y axes,
 #  as well as the area of a single cell.
@@ -22,7 +28,7 @@ ground_access_max_time = 90
 ground_avg_speed = 60
 max_ground_distance = ground_avg_speed * ground_access_max_time / 60
 
-destination_cell = 61 # 61+15 to get multi airport as destination
+destination_cell = 61 + 15 # 61+15 to get multi airport as destination
 
 pop_coords = cells_generation(num_pop_cells_x, num_pop_cells_y, pop_cell_area)
 pop_density = get_pop_density(pop_coords)
@@ -56,6 +62,38 @@ for ii in range(len(all_simple_paths)):
 #                     graph=airports_graph_below_tau,paths=all_simple_paths,
 #                    destination_cell=destination_cell, show_airports=True)
 
-
 plt.show()
+
+airports_df = pd.DataFrame({
+    'id': range(num_airports), 'type': 'airport', 'x': airports_coords[:, 0], 'y': airports_coords[:, 1], 'population': 0
+})
+
+population_df = pd.DataFrame({
+    'id': range(num_airports, num_airports + num_populations_cells),
+    'type': 'population', 'x': pop_coords[:, 0], 'y': pop_coords[:, 1],
+    'population': get_pop_density(pop_coords)
+})
+
+
+m = EACN_REG(airports_df, population_df, airports_graph_below_tau, all_simple_paths, pop_paths, tau)
+
+if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
+    print("\n--- Riepilogo della Soluzione Trovata ---")
+
+    all_vars = m.getVars()
+    y_vars = [v for v in all_vars if v.VarName.startswith('y[')]
+    psi_vars = [v for v in all_vars if v.VarName.startswith('psi[')]
+
+    active_bases = [int(v.VarName[2:-1]) for v in y_vars if v.X > 0.5]
+    print(f" Basi di Ricarica Attive ({len(active_bases)}):")
+    print(active_bases)
+    
+    print("\n-------------------------------------------")
+    print(f"Valore Funzione Obiettivo: {m.ObjVal:,.2f}")
+    print(f"MIP Gap: {m.MIPGap:.4%}")
+    print("-------------------------------------------")
+
+else:
+    print("\nNessuna soluzione trovata. Stato Gurobi:", m.Status)
+
 print("End")
