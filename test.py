@@ -62,7 +62,7 @@ for ii in range(len(all_simple_paths)):
 #                     graph=airports_graph_below_tau,paths=all_simple_paths,
 #                    destination_cell=destination_cell, show_airports=True)
 
-plt.show()
+# plt.show()
 
 airports_df = pd.DataFrame({
     'id': range(num_airports), 'type': 'airport', 'x': airports_coords[:, 0], 'y': airports_coords[:, 1], 'population': 0
@@ -78,7 +78,6 @@ population_df = pd.DataFrame({
 m = EACN_REG(airports_df, population_df, airports_graph_below_tau, all_simple_paths, pop_paths, tau)
 
 if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
-    print("\n--- Riepilogo della Soluzione Trovata ---")
 
     all_vars = m.getVars()
     y_vars = [v for v in all_vars if v.VarName.startswith('y[')]
@@ -95,5 +94,36 @@ if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
 
 else:
     print("\nNessuna soluzione trovata. Stato Gurobi:", m.Status)
+
+
+if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
+    
+    all_vars = m.getVars()
+    psi_vars = [v for v in all_vars if v.VarName.startswith('psi[')]
+    
+    active_path_indices = [int(v.VarName[4:-1]) for v in psi_vars if v.X > 0.5]
+    solution_paths = [all_simple_paths[i] for i in active_path_indices]
+    
+    if not solution_paths:
+        print("Nessun percorso è risultato fattibile nella soluzione trovata.")
+    else:
+    
+        for i, single_path in enumerate(solution_paths):
+
+            plot_possible_paths(
+                pop_coords=pop_coords,
+                airports_coords=airports_coords,
+                destination_airports=destination_airports,
+                graph=airports_graph_below_tau,
+                paths=[single_path],
+                destination_cell=destination_cell,
+                pop_paths=pop_paths
+            )
+            plt.title(f'Visualizzazione del Percorso Scelto dalla Soluzione: {single_path}')
+            
+else:
+    print("Nessuna soluzione valida trovata. Impossibile visualizzare i percorsi.")
+
+plt.show()
 
 print("End")
