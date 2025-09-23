@@ -15,12 +15,16 @@ def build_initial_kernel(airports_df, pop_paths, kernel_size):
 
         for path in paths:
             for airport_node in path:
-                airport_served_pops[airport_node].add(pop_id)
+                airport_served_pops[airport_node].add(pop_id) 
+                
+    # airport_served_pops è un dizionario che associa ad ogni aeroporto i, le popolazioni che hanno una tratta che passa per i
 
     for airport_id, pop_served in airport_served_pops.items():
 
         score = len(pop_served)
         airport_scores[airport_id] = score
+
+    # airport_scores è un dizionario che associa ad ogni aeroporto i, il numero totale di popolazioni che hanno una tratta che passa per i
 
     sorted_airports = sorted(airport_scores.items(), key=lambda item: item[1], reverse=True)
 
@@ -41,12 +45,13 @@ def eacn_ks (airports_df, population_df, airports_graph_below_tau, all_simple_pa
 
     airports = set(airports_df['id'].tolist())
 
-    for iter in range(max_iterations):
+    for iter in range(max_iterations): # manca maximum run time
 
         non_kernel_airports = airports.difference(kernel_airports)  
         non_kernel_airports_list = list(non_kernel_airports)
         
         random.shuffle(non_kernel_airports_list)
+        # Creare insieme di bucket ecc ...
          
 
     

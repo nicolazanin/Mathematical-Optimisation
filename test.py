@@ -10,7 +10,7 @@ from utilis.init_dataset import (cells_generation, nodes_generation, get_pop_cel
 from utilis.preprocessing import create_threshold_graph
 from utilis.init_model import get_all_simple_path_to_destinations, get_pop_paths
 from utilis.plot import plot_dataset, plot_possible_paths
-from utilis.EACN_REG_model import EACN_REG
+from utilis.eanc_reg_model import solve_eacn_model
 
 # To achieve maximum scalability, the grid is built using the number of cells along the X and Y axes,
 #  as well as the area of a single cell.
@@ -75,7 +75,7 @@ population_df = pd.DataFrame({
 })
 
 
-m = EACN_REG(airports_df, population_df, airports_graph_below_tau, all_simple_paths, pop_paths, tau)
+m = solve_eacn_model(airports_df, population_df, airports_graph_below_tau, all_simple_paths, pop_paths, tau)
 
 if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
 

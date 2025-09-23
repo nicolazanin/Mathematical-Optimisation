@@ -1,12 +1,49 @@
-
-from utilis.bigM import calculate_tight_big_m
 import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
 
-def eanc_reg_restricted(airports_df, population_df, airports_graph_below_tau, all_simple_paths, pop_paths, tau, kernel, bucket, best_obj_value): # MODIFICA KS
+def calculate_tight_big_m(airports_df, dist, G, tau):
+    
+    airports = airports_df['id'].tolist()
+    
+    M1_vals = {}
+    for i in airports:
+        neighbors = list(G.neighbors(i))
+        if not neighbors: 
+            M1_vals[i] = 0 
+        else:
+            min_dist_to_neighbor = min(dist[i, j] for j in neighbors)
 
-    candidate_airports = kernel.union(bucket) # MODIFICA KS
+            M1_vals[i] = tau - min_dist_to_neighbor + 0.001 
+
+    M2_vals = {}
+    M3_vals = {}
+    for i, j in G.edges():
+        edge = tuple(sorted((i,j)))
+        
+        neighbors_i = list(G.neighbors(i))
+        neighbors_j = list(G.neighbors(j))
+
+        if not neighbors_j:
+            min_dist_from_j = 0 
+        else:
+            min_dist_from_j = min(dist[j, r] for r in neighbors_j)
+        M2_vals[edge] = dist[i,j] + tau - min_dist_from_j + 0.001
+
+        if not neighbors_i:
+            min_dist_from_i = 0 
+        else:
+            min_dist_from_i = min(dist[i, r] for r in neighbors_i)
+        M3_vals[edge] = dist[i,j] + tau - min_dist_from_i - min_dist_from_j + 0.002
+            
+    return M1_vals, M2_vals, M3_vals
+
+
+def solve_eacn_model(airports_df, population_df, airports_graph_below_tau, all_simple_paths, pop_paths, tau, 
+                     ks=False, kernel=None, bucket=None, best_obj_value=-float('inf')):
+
+    if ks:
+        candidate_airports = kernel.union(bucket) # MODIFICA KS
 
     mu1 = 100
     mu2 = 10000
@@ -19,10 +56,8 @@ def eanc_reg_restricted(airports_df, population_df, airports_graph_below_tau, al
 
     m = gp.Model("EACN_REG_Strengthened")
 
-    
-
     y = m.addVars(airports, vtype=GRB.BINARY, name="y")
-    rho = m.addVars(airports, vtype=GRB.CONTINUOUS, name="rho", lb=0.0) # lb -> lower bound, lb=0.0 per porre il vicolo rho[i] >= 0, come da vincolo (7)
+    rho = m.addVars(airports, vtype=GRB.CONTINUOUS, name="rho", lb=0.0)
     w = m.addVars([(i, j) for i in airports for j in airports_graph_below_tau.neighbors(i)], vtype=GRB.BINARY, name="w") # -> Correzione chagpt
     chi = m.addVars(airports, vtype=GRB.BINARY, name="chi")
 
@@ -35,14 +70,16 @@ def eanc_reg_restricted(airports_df, population_df, airports_graph_below_tau, al
 
     population_covered = gp.quicksum(phi[k] * population_df.set_index('id').loc[k, 'population'] for k in population_df['id'])
     installation_cost = gp.quicksum(y[i] for i in airports)
-    objective_func = mu1 * population_covered - mu2 * installation_cost # MODIFICA KS
-    m.setObjective(objective_func, GRB.MAXIMIZE) # MODIFICA KS
+    objective_func = mu1 * population_covered - mu2 * installation_cost 
+    m.setObjective(objective_func, GRB.MAXIMIZE) 
 
-    m.addConstr(objective_func >= best_obj_value + 0.001, name="obj_improvement_constraint") # MODIFICA KS
+    if ks:
+        m.addConstr(objective_func >= best_obj_value + 0.001, name="obj_improvement_constraint") # MODIFICA KS
 
     for i in airports:
-        if i not in candidate_airports: # MODIFICA KS
-            y[i].ub = 0
+        if ks:
+            if i not in candidate_airports: # MODIFICA KS
+                y[i].ub = 0
         neighbors = list(airports_graph_below_tau.neighbors(i))
         m.addConstr(rho[i] <= M1_vals[i] * (1 - y[i])) 
         m.addConstr(y[i] + gp.quicksum(w.get((i,j), 0) for j in neighbors) + chi[i] == 1) 
