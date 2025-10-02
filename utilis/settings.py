@@ -104,9 +104,9 @@ def setup_logging(log_prefix: str, print_file: bool = True) -> None:
         pass
     else:
         _log_file_name = "{}-{}_log_file.txt".format(log_prefix, datetime.datetime.utcnow().
-                                                     strftime("%Y-%m-%d %H:%M:%S").replace(":", "-").replace(" ", "-"))
+                                                     strftime("%H:%M:%S").replace(":", "-").replace(" ", "-"))
         _log_format = '%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s'
-        _console_date_format = '%Y-%m-%d %H:%M:%S'
+        _console_date_format = '%H:%M:%S'
         _file_date_format = _console_date_format
 
         console_formatter = logging.Formatter(_log_format, _console_date_format)

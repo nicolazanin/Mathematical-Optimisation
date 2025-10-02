@@ -76,7 +76,7 @@ population_df = pd.DataFrame({
     'type': 'population', 'x': population_coords[:, 0], 'y': population_coords[:, 1],
     'population': get_pop_density(population_coords)
 })
-
+_logger.info("-------------- MILP Optimization --------------")
 m = solve_eacn_model(airports_df, population_df, airports_graph_below_tau, all_simple_paths, pop_paths,
                      settings.aircraft_config.tau)
 active_bases = []
@@ -87,16 +87,13 @@ if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
     psi_vars = [v for v in all_vars if v.VarName.startswith('psi[')]
 
     active_bases = [int(v.VarName[2:-1]) for v in y_vars if v.X > 0.5]
-    print(f" Basi di Ricarica Attive ({len(active_bases)}):")
-    print(active_bases)
+    _logger.info("Basi di Ricarica Attive ({}): {}".format(len(active_bases), str(active_bases)))
 
-    print("\n-------------------------------------------")
-    print(f"Valore Funzione Obiettivo: {m.ObjVal:,.2f}")
-    print(f"MIP Gap: {m.MIPGap:.4%}")
-    print("-------------------------------------------")
+    _logger.info(f"Valore Funzione Obiettivo: {m.ObjVal:,.2f}")
+    _logger.info(f"MIP Gap: {m.MIPGap:.4%}")
 
 else:
-    print("\nNessuna soluzione trovata. Stato Gurobi:", m.Status)
+    _logger.info("\nNessuna soluzione trovata. Stato Gurobi:", m.Status)
 
 if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
 
@@ -107,9 +104,9 @@ if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
     solution_paths = [all_simple_paths[i] for i in active_path_indices]
 
     if not solution_paths:
-        print("Nessun percorso è risultato fattibile nella soluzione trovata.")
+        _logger.info("Nessun percorso è risultato fattibile nella soluzione trovata.")
 else:
-    print("Nessuna soluzione valida trovata. Impossibile visualizzare i percorsi.")
+    _logger.info("Nessuna soluzione valida trovata. Impossibile visualizzare i percorsi.")
 
 _logger.info("-------------- Plot --------------")
 plot_dataset(population_coords=population_coords, population_density=population_density,

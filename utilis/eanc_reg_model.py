@@ -55,7 +55,7 @@ def solve_eacn_model(airports_df, population_df, airports_graph_below_tau, all_s
     M1_vals, M2_vals, M3_vals = calculate_tight_big_m(airports_df, dist, airports_graph_below_tau, tau)
 
     m = gp.Model("EACN_REG_Strengthened")
-
+    m.setParam('LogToConsole', 0)
     y = m.addVars(airports, vtype=GRB.BINARY, name="y")
     rho = m.addVars(airports, vtype=GRB.CONTINUOUS, name="rho", lb=0.0)
     w = m.addVars([(i, j) for i in airports for j in airports_graph_below_tau.neighbors(i)], vtype=GRB.BINARY, name="w") # -> Correzione chagpt
