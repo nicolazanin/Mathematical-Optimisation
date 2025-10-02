@@ -1,0 +1,28 @@
+# To achieve maximum scalability, the grid is built using the number of cells along the X and Y axes, as well as the
+# area of a single cell.
+population_config:
+  cells_x: 15
+  cells_y: 15
+  cell_area: 2000 # square km
+  min_density: 0
+  max_density: 50000
+  destination_cells: [25, 61] # 61+15 to get multi airport as destination
+
+airports_config:
+  num: 8
+  min_distance: 30 # km
+
+aircraft_config:
+  tau: 400 # single charge range
+  cruise_speed: 400 # km per hours
+
+ground_access_config:
+  max_time: 90 # min
+  avg_speed: 60 # km per hours
+
+paths_config:
+  max_edges: 3 # maximum of 3 adjacent edges (maximum of 2 intermediate airports)
+  routing_factor_thr: 1.4 # ratio between the path’s total flight distance and the nonstop flight distance
+
+logging_lvl: 20 # 10: Debug; 20: info
+print_logs: False

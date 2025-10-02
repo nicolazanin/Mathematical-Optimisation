@@ -1,34 +1,32 @@
 import networkx as nx
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
-def get_all_simple_path_to_destinations(graph: nx.Graph, destination_nodes: list, max_path_len: int) -> list:
+def get_all_simple_path_to_destinations(graph: nx.Graph, destination_nodes: list, max_path_edges: int) -> list:
     """
-    Finds all simple paths from all non-destination nodes to any of the destination nodes
-    in a graph, up to a specified maximum path length.
+    Finds all simple paths from all non-destination nodes to any of the destination nodes in a graph, up to a specified
+    maximum path length.
 
     Args:
         graph (nx.Graph): A NetworkX graph.
         destination_nodes (list): A list of nodes considered as destination nodes.
-        max_path_len (int): Maximum allowed path length (number of nodes in the path).
+        max_path_edges (int): Maximum allowed path edges.
 
     Returns:
         list: An array of all simple paths (each path is a list of node IDs).
-
-    Notes:
-        - Paths are only computed from source nodes that are not in the destination set.
-        - The `cutoff` parameter in `nx.all_simple_paths` is set to `max_path_len - 1`
-          because it defines the *maximum number of edges*, not nodes.
     """
+    # Paths are only computed from source nodes that are not in the destination set.
     all_simple_paths = []
     for source_node in graph.nodes():
         if source_node not in destination_nodes:
             # Find all simple paths from the source node to any destination node
             paths = nx.all_simple_paths(graph, source=source_node, target=destination_nodes,
-                                        cutoff=max_path_len - 1)
+                                        cutoff=max_path_edges)
             all_simple_paths.extend(list(paths))
 
     return all_simple_paths
-
 
 def get_pop_paths(pop_coords, all_simple_paths: list, pop_cells_near_airports) -> dict:
     """
