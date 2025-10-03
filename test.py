@@ -2,6 +2,7 @@ import sys
 import pandas as pd
 from gurobipy import GRB
 import logging
+import time
 
 from utilis.init_dataset import (cells_generation, nodes_generation, get_population_cells_near_airports,
                                  get_pop_density, nodes_distances, grid_dimensions, get_destination_airports)
@@ -10,12 +11,13 @@ from utilis.preprocessing import (create_threshold_graph, get_attractive_paths, 
 from utilis.plot import plot_dataset
 from utilis.eanc_reg_model import solve_eacn_model
 from utilis.settings import settings, setup_logging
+tic = time.time()
 
 setup_logging(log_prefix="EACN-REG", print_file=settings.print_logs)
 _logger = logging.getLogger(__name__)
 _logger.setLevel(settings.logging_lvl)
 
-_logger.info("-------------- EACN-REG framework starting --------------")
+_logger.info("-------------- EACN-REG starting --------------")
 
 _logger.info("-------------- Initialize the population grid dataset --------------")
 population_coords = cells_generation(num_cells_x=settings.population_config.cells_x,
@@ -122,3 +124,5 @@ else:
                  max_ground_distance=max_ground_distance, all_paths=all_paths,
                  attractive_paths=attractive_paths,
                  population_cells_near_airports=population_cells_near_airports, charging_airports=active_bases)
+
+_logger.info("Total execution time for EACN-REG: {:.1f} minutes".format((time.time() - tic)/60))
