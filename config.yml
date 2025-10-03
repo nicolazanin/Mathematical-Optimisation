@@ -1,15 +1,15 @@
 # To achieve maximum scalability, the grid is built using the number of cells along the X and Y axes, as well as the
 # area of a single cell.
 population_config:
-  cells_x: 15
-  cells_y: 15
-  cell_area: 2000 # square km
+  cells_x: 20
+  cells_y: 10
+  cell_area: 2250 # total area of 450,000 square kilometers
   min_density: 0
   max_density: 50000
   destination_cells: [25, 61] # 61+15 to get multi airport as destination
 
 airports_config:
-  num: 8
+  num: 10 # 7 is interesting
   min_distance: 30 # km
 
 aircraft_config:

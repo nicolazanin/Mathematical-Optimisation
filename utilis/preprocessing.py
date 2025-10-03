@@ -1,10 +1,11 @@
 import networkx as nx
+import numpy as np
 import logging
 
 _logger = logging.getLogger(__name__)
 
 
-def create_threshold_graph(distances: dict, tau: float, mode: str = "below") -> nx.Graph:
+def  create_threshold_graph(distances: dict, tau: float, mode: str = "below") -> nx.Graph:
     """
     Creates a single undirected graph by including edges based on a distance threshold.
 
@@ -30,7 +31,7 @@ def create_threshold_graph(distances: dict, tau: float, mode: str = "below") -> 
     return graph
 
 
-def get_attractive_paths(paths: list, distances: dict, routing_factor_thr: float) -> list:
+def get_attractive_paths(paths: np.ndarray, distances: dict, routing_factor_thr: float) -> np.ndarray:
     """
     Removes paths that are considered unattractive based on the routing factor threshold.
 
@@ -39,13 +40,13 @@ def get_attractive_paths(paths: list, distances: dict, routing_factor_thr: float
     equal to the threshold are returned.
 
     Args:
-        paths (list): An array of all simple paths (each path is a list of node IDs).
+        paths (list): A NumPy array of all simple paths (each path is a list of node IDs).
         distances (dict): A dictionary where each key is a tuple (i, j) representing a pair of nodes indices, and the
         value is the Euclidean distance between node i and node j.
         routing_factor_thr (float): Ratio between the path’s total distance and the nonstop distance
 
     Returns:
-        list: An array of all simple paths without the unattractive paths (each path is a list of node IDs).
+         np.ndarray: A NumPy array of attractive paths (each path is a list of node IDs).
     """
     attractive_paths = []
     for path in paths:
@@ -72,4 +73,58 @@ def get_attractive_paths(paths: list, distances: dict, routing_factor_thr: float
     _logger.info("Removed {} unattractive based on the routing factor threshold (routing_factor_thr={})".format(
         len(paths) - len(attractive_paths), routing_factor_thr))
 
-    return attractive_paths
+    return np.array(attractive_paths, dtype=object)
+
+
+def get_all_paths_to_destinations(graph: nx.Graph, destination_airports: np.ndarray,
+                                         max_path_edges: int) -> np.ndarray:
+    """
+    Finds all paths from all non-destination airport nodes (path origin) to any of the destination nodes in a graph, up
+    to a specified maximum path length.
+
+    Args:
+        graph (nx.Graph): A NetworkX graph.
+        destination_airports (np.ndarray): A NumPy array of destination airports indices close to the destination cells.
+        max_path_edges (int): Maximum allowed path edges.
+
+    Returns:
+        np.ndarray: A NumPy array of all paths (each path is a list of node IDs).
+    """
+    # Paths are only computed from source nodes that are not in the destination set.
+    all_paths = []
+    for source_node in graph.nodes():
+        if source_node not in destination_airports:
+            paths = nx.all_simple_paths(graph, source=source_node, target=destination_airports,
+                                        cutoff=max_path_edges)
+            all_paths.extend(list(paths))
+
+    return np.array(all_paths, dtype=object)
+
+
+def get_population_cells_paths(population_coords, paths: np.ndarray,
+                               population_cells_near_airports: dict) -> dict:
+    """
+    Finds for each population cell the set of paths (each path is a list of node IDs) starting from an airport near that
+    population cell.
+
+    Args:
+        population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
+        of population cell centers.
+        paths (np.ndarray): A NumPy array of paths (each path is a list of node IDs).
+        population_cells_near_airports (dict): A dictionary where each key is an airport index, and each value is a list
+        of indices of population cells located within the specified distance from that airport.
+
+    Returns:
+        dict: A dictionary mapping each population cell index to a list of paths (each path is a list of node
+        IDs) starting from an airport near that population cell.
+    """
+    population_cells_paths = {}
+    for idx, pop in enumerate(population_coords):
+        population_cells_paths[idx] = []
+
+    for simple_path in paths:
+        starting_airport = simple_path[0]
+        for pop in population_cells_near_airports[starting_airport]:
+            population_cells_paths[pop].append(simple_path)
+
+    return population_cells_paths

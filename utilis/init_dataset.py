@@ -3,7 +3,7 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-np.random.seed(67)
+np.random.seed(2)
 
 
 def nodes_generation(num_nodes: int,
@@ -22,7 +22,7 @@ def nodes_generation(num_nodes: int,
         max_attempts (int): Maximum number of attempts per node to find a valid location.
 
     Returns:
-        np.ndarray: A NumPy array of shape (num_nodes, 2) containing the (x, y) coordinates of each node.
+        np.ndarray: A NumPy array of shape (num_nodes, 2) containing (x, y) coordinates of each node.
     """
     coords = []
     attempts = 0
@@ -44,6 +44,7 @@ def nodes_generation(num_nodes: int,
     coords = np.array(coords)
     _logger.info("Created {} nodes within an area of {:.1f}km x {:.1f}km with a minimum distance between nodes of "
                  "{:.0f}km".format(num_nodes, total_width, total_height, min_distance_km))
+
     return coords
 
 
@@ -52,7 +53,7 @@ def nodes_distances(nodes_coords: np.ndarray) -> dict:
     Computes the pairwise Euclidean distances between nodes.
 
     Args:
-        nodes_coords (np.ndarray): A NumPy array of shape (n, 2) containing the (x, y) coordinates of each node.
+        nodes_coords (np.ndarray): A NumPy array of shape (n, 2) containing (x, y) coordinates of each node.
 
     Returns:
         dict: A dictionary where each key is a tuple (i, j) representing a pair of node indices, and the value is the
@@ -66,6 +67,7 @@ def nodes_distances(nodes_coords: np.ndarray) -> dict:
             dist = np.linalg.norm(nodes_coords[i] - nodes_coords[j])
             distances[(i, j)] = dist
     _logger.info("Calculated pairwise Euclidean distances between {} nodes".format(len(distances)))
+
     return distances
 
 
@@ -79,7 +81,7 @@ def cells_generation(num_cells_x: int, num_cells_y: int, cell_area: float) -> np
         cell_area (float): Area of square cell. Assumes square cells (width = height = sqrt(area)).
 
     Returns:
-        np.ndarray: A NumPy array of shape (num_cells_x * num_cells_y, 2) containing (x, y) center coordinates.
+        np.ndarray: A NumPy array of shape (num_cells_x * num_cells_y, 2) containing (x, y) coordinates of cell centers.
     """
     cell_width = cell_height = np.sqrt(cell_area)
     cells_coords = []
@@ -110,12 +112,13 @@ def grid_dimensions(num_cells_x: int, num_cells_y: int, cell_area: float) -> tup
     cell_width = cell_height = np.sqrt(cell_area)
     total_width = num_cells_x * cell_width
     total_height = num_cells_y * cell_height
+
     return total_width, total_height
 
 
-def get_pop_cells_near_airports(airports_coords: np.ndarray,
-                                population_coords: np.ndarray,
-                                max_ground_distance: float) -> dict:
+def get_population_cells_near_airports(airports_coords: np.ndarray,
+                                       population_coords: np.ndarray,
+                                       max_ground_distance: float) -> dict:
     """
     Identifies population cells that are within a specified maximum ground distance from each airport.
 
@@ -130,17 +133,18 @@ def get_pop_cells_near_airports(airports_coords: np.ndarray,
         dict: A dictionary where each key is an airport index, and each value is a list of indices of population cells
         located within the specified distance from that airport.
     """
-    pop_cells_near_airports = {}
+    population_cells_near_airports = {}
 
     for airport_idx, airport_coord in enumerate(airports_coords):
         # Vectorized distance computation
         distances = np.linalg.norm(population_coords - airport_coord, axis=1)
         near_cells = np.where(distances < max_ground_distance)[0].tolist()
-        pop_cells_near_airports[airport_idx] = near_cells
+        population_cells_near_airports[airport_idx] = near_cells
 
     _logger.info("Identified all the population cells within a maximum ground distance of {}km from each airport".
                  format(max_ground_distance))
-    return pop_cells_near_airports
+
+    return population_cells_near_airports
 
 
 def get_pop_density(population_coords: np.ndarray, min_density: int = 0, max_density: int = 50000) -> np.ndarray:
@@ -148,13 +152,35 @@ def get_pop_density(population_coords: np.ndarray, min_density: int = 0, max_den
     Generates random population density values for a list of population grid cell coordinates.
 
     Args:
-        population_coords (np.ndarray): Array of shape (num_population_cells, 2) containing (x, y) coordinates of
-        population cell centers.
+        population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
+        of population cell centers.
         min_density (int, optional): Minimum population density value.
         max_density (int, optional): Maximum population density value.
 
     Returns:
-        np.ndarray: Array of population density values (integers) with the same length as `pop_coords`.
+        np.ndarray: A NumPy array of population density values (integers) with the same length as `population_coords`.
     """
     _logger.info("Generated random population density for each population grid cell")
+
     return np.random.randint(min_density, max_density, size=len(population_coords))
+
+
+def get_destination_airports(destination_cells, population_cells_near_airports) -> np.ndarray:
+    """
+    Returns a NumPy array of destination airports indices close to the destination cells.
+
+    Args:
+        destination_cells (list): An array of destination cell indices.
+        population_cells_near_airports (dict): A dictionary where each key is an airport index, and each value is a list
+        of indices of population cells located within the specified distance from that airport.
+
+    Returns:
+        np.ndarray: A NumPy array of destination airports indices close to the destination cells.
+    """
+    destination_airports = []
+    for airport in population_cells_near_airports.keys():
+        for destination_cell in destination_cells:
+            if destination_cell in population_cells_near_airports[airport]:
+                destination_airports.append(airport)
+
+    return np.array(destination_airports)
