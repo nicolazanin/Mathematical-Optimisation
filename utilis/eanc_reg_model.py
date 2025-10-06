@@ -1,132 +1,111 @@
 import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
-
-def calculate_tight_big_m(airports_df, dist, G, tau):
-    
-    airports = airports_df['id'].tolist()
-    
-    M1_vals = {}
-    for i in airports:
-        neighbors = list(G.neighbors(i))
-        if not neighbors: 
-            M1_vals[i] = 0 
-        else:
-            min_dist_to_neighbor = min(dist[i, j] for j in neighbors)
-
-            M1_vals[i] = tau - min_dist_to_neighbor + 0.001 
-
-    M2_vals = {}
-    M3_vals = {}
-    for i, j in G.edges():
-        edge = tuple(sorted((i,j)))
-        
-        neighbors_i = list(G.neighbors(i))
-        neighbors_j = list(G.neighbors(j))
-
-        if not neighbors_j:
-            min_dist_from_j = 0 
-        else:
-            min_dist_from_j = min(dist[j, r] for r in neighbors_j)
-        M2_vals[edge] = dist[i,j] + tau - min_dist_from_j + 0.001
-
-        if not neighbors_i:
-            min_dist_from_i = 0 
-        else:
-            min_dist_from_i = min(dist[i, r] for r in neighbors_i)
-        M3_vals[edge] = dist[i,j] + tau - min_dist_from_i - min_dist_from_j + 0.002
-            
-    return M1_vals, M2_vals, M3_vals
+from utilis.settings import settings
 
 
-def solve_eacn_model(airports_df, population_df, airports_graph_below_tau, all_simple_paths, pop_paths, tau, 
-                     ks=False, kernel=None, bucket=None, best_obj_value=-float('inf')):
+def calculate_tight_big_m(active_graph):
+    m1_vals = {}
+    for airport in list(active_graph.nodes):
+        neighbors = list(active_graph.neighbors(airport))
+        min_dist_to_neighbor = min(active_graph.edges[airport,neighbor]['weight'] for neighbor in neighbors)
+        m1_vals[airport] = settings.aircraft_config.tau - min_dist_to_neighbor + settings.model_config.epsilon
 
+    m2_vals = {}
+    m3_vals = {}
+    for airport_i, airport_j in active_graph.edges():
+        edge = tuple(sorted((airport_i, airport_j)))
+
+        neighbors_i = list(active_graph.neighbors(airport_i))
+        neighbors_j = list(active_graph.neighbors(airport_j))
+
+        min_dist_from_j = min(active_graph.edges[airport_j,neighbor]['weight'] for neighbor in neighbors_j)
+        m2_vals[edge] = (active_graph.edges[airport_i,airport_j]['weight'] + settings.aircraft_config.tau - min_dist_from_j +
+                         settings.model_config.epsilon)
+
+        min_dist_from_i = min(active_graph.edges[airport_i,neighbor]['weight'] for neighbor in neighbors_i)
+        m3_vals[edge] = (active_graph.edges[airport_i,airport_j]['weight'] + settings.aircraft_config.tau - min_dist_from_i -
+                         min_dist_from_j + settings.model_config.epsilon * 2)
+
+    return m1_vals, m2_vals, m3_vals
+
+
+def solve_eacn_model(population_density, attractive_paths, activation_costs, active_graph, active_airports,
+                     population_cells_paths, destination_cell2destination_airport, ks=False, kernel=None, bucket=None, best_obj_value=-float('inf')):
     if ks:
-        candidate_airports = kernel.union(bucket) # MODIFICA KS
+        candidate_airports = kernel.union(bucket)  # MODIFICA KS
 
-    mu1 = 100
-    mu2 = 10000
-
-    airports = airports_df['id'].tolist() 
-    coords = airports_df[['x', 'y']].to_numpy() 
-    dist = np.linalg.norm(coords[:, np.newaxis, :] - coords[np.newaxis, :, :], axis=2)
-
-    M1_vals, M2_vals, M3_vals = calculate_tight_big_m(airports_df, dist, airports_graph_below_tau, tau)
+    m1_vals, m2_vals, m3_vals = calculate_tight_big_m(active_graph)
 
     m = gp.Model("EACN_REG_Strengthened")
     m.setParam('LogToConsole', 0)
-    y = m.addVars(airports, vtype=GRB.BINARY, name="y")
-    rho = m.addVars(airports, vtype=GRB.CONTINUOUS, name="rho", lb=0.0)
-    w = m.addVars([(i, j) for i in airports for j in airports_graph_below_tau.neighbors(i)], vtype=GRB.BINARY, name="w") # -> Correzione chagpt
-    chi = m.addVars(airports, vtype=GRB.BINARY, name="chi")
+    y = m.addVars(len(active_airports), vtype=GRB.BINARY, name="y")
+    rho = m.addVars(len(active_airports), vtype=GRB.CONTINUOUS, name="rho", lb=0.0)
+    w = m.addVars([(i, j) for i in range(len(active_airports)) for j in active_graph.neighbors(i)],
+                  vtype=GRB.BINARY, name="w")
+    chi = m.addVars(len(active_airports), vtype=GRB.BINARY, name="chi")
 
-    canonical_edges = sorted(list(set(tuple(sorted(edge)) for edge in airports_graph_below_tau.edges())))
+    canonical_edges = sorted(list(set(tuple(sorted(edge)) for edge in active_graph.edges())))
 
     z = m.addVars(canonical_edges, vtype=GRB.BINARY, name="z")
 
-    psi = m.addVars(len(all_simple_paths), vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="psi")
-    phi = m.addVars(population_df['id'], vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="phi")
-
-    population_covered = gp.quicksum(phi[k] * population_df.set_index('id').loc[k, 'population'] for k in population_df['id'])
-    installation_cost = gp.quicksum(y[i] for i in airports)
-    objective_func = mu1 * population_covered - mu2 * installation_cost 
-    m.setObjective(objective_func, GRB.MAXIMIZE) 
+    psi = m.addVars(len(attractive_paths), vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="psi")
+    phi = m.addVars([(i, j) for i in range(len(population_density)) for j in
+                     range(len(settings.population_config.destination_cells))], vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0,
+                    name="phi")
+    population_covered = np.array([population_density[id]*phi[id,_] for id in range(len(population_density)) for _ in range(len(settings.population_config.destination_cells))]).sum()
+    installation_cost = np.array(activation_costs[active_airports]*[y[i] for i in range(len(active_airports))]).sum()
+    objective_func = settings.model_config.mu_1 * population_covered - settings.model_config.mu_2 * installation_cost
+    m.setObjective(objective_func, GRB.MAXIMIZE)
 
     if ks:
-        m.addConstr(objective_func >= best_obj_value + 0.001, name="obj_improvement_constraint") # MODIFICA KS
+        m.addConstr(objective_func >= best_obj_value + 0.001, name="obj_improvement_constraint")  # MODIFICA KS
 
-    for i in airports:
+    for airport in active_airports:
         if ks:
-            if i not in candidate_airports: # MODIFICA KS
+            if airport not in candidate_airports:  # MODIFICA KS
                 y[i].ub = 0
-        neighbors = list(airports_graph_below_tau.neighbors(i))
-        m.addConstr(rho[i] <= M1_vals[i] * (1 - y[i])) 
-        m.addConstr(y[i] + gp.quicksum(w.get((i,j), 0) for j in neighbors) + chi[i] == 1) 
-        m.addConstr(rho[i] >= M1_vals[i] * chi[i])
-        for j in neighbors:
-            edge = tuple(sorted((i,j)))
-            m.addGenConstrIndicator(w.get((i,j),0), 1, rho[i] <= dist[i, j] + rho[j]) 
-            m.addConstr(rho[i] >= dist[i, j] + rho[j] - M2_vals[edge] * (1 - w.get((i,j), 0)))
+        neighbors = list(active_graph.neighbors(airport))
+        m.addConstr(rho[airport] <= m1_vals[airport] * (1 - y[airport])) # 12
+        m.addConstr(y[airport] + gp.quicksum(w[(airport, neighbor)] for neighbor in neighbors) + chi[airport] == 1) # 16
+        m.addConstr(rho[airport] >= m1_vals[airport] * chi[airport]) # 15
+        for neighbor in neighbors:
+            edge = tuple(sorted((airport, neighbor)))
+            m.addConstr(rho[airport] <= active_graph.edges[airport,neighbor]['weight'] + rho[neighbor]) # 13
+            m.addConstr(rho[airport] >= active_graph.edges[airport,neighbor] ['weight']+ rho[neighbor] - m2_vals[edge] * (
+                    1 - w[(airport, neighbor)])) # 14
 
-    for i, j in canonical_edges:
-        m.addConstr(dist[i, j] + rho[i] + rho[j] <= tau + M3_vals[i,j] * (1 - z[i,j])) 
+        neighbors = list(active_graph.neighbors(airport))
+        min_dist_to_neighbor = min(active_graph.edges[airport,neighbor]['weight'] for neighbor in neighbors)
+        m.addConstr(rho[airport] >= min(min_dist_to_neighbor, m1_vals[airport]) * (1 - y[airport])) # 20
 
-    for i in airports:
-        neighbors = list(airports_graph_below_tau.neighbors(i))
-        if neighbors:
-            min_dist_to_neighbor = min(dist[i, j] for j in neighbors)
-            m.addConstr(rho[i] >= min(min_dist_to_neighbor, M1_vals[i]) * (1 - y[i])) 
+    for airport_i, airport_j in canonical_edges:
+        m.addConstr(active_graph.edges[airport_i, airport_j]['weight'] + rho[airport_i] + rho[airport_j] <=
+                    settings.aircraft_config.tau + m3_vals[airport_i, airport_j] * (1 - z[airport_i, airport_j])) # 4
 
-    for i, j in canonical_edges:
-        m.addConstr(z[i,j] <= 1 - chi[i]) 
-        m.addConstr(z[i,j] <= 1 - chi[j]) 
+    for airport_i, airport_j in canonical_edges:
+        m.addConstr(z[airport_i, airport_j] <= 1 - chi[airport_i]) # 21
+        m.addConstr(z[airport_i, airport_j] <= 1 - chi[airport_j]) # 22
+        m4_ij = settings.aircraft_config.tau - active_graph.edges[airport_i, airport_j]['weight']
+        m.addConstr(active_graph.edges[airport_i, airport_j]['weight'] + rho[airport_i] + rho[airport_j] +
+                    m4_ij * z[airport_i, airport_j] >= settings.aircraft_config.tau) # 24
 
-    for p_idx, path in enumerate(all_simple_paths):
-        path_edges = [tuple(sorted((path[i], path[i+1]))) for i in range(len(path) - 1)]
-        m.addConstr(psi[p_idx] - gp.quicksum(z.get(edge, 0) for edge in path_edges) >= 1 - len(path_edges)) 
+    for id, path in enumerate(attractive_paths):
+        path_edges = [tuple(sorted((path[i], path[i + 1]))) for i in range(len(path) - 1)]
+        m.addConstr(psi[id] - gp.quicksum(z[edge] for edge in path_edges) >= 1 - len(path_edges)) # 23
+        for edge in path_edges:
+            m.addConstr(psi[id] <= z[edge]) # 5
 
-    for i, j in canonical_edges:
-        M4_ij = tau - dist[i,j]
-        m.addConstr(dist[i, j] + rho[i] + rho[j] + M4_ij * z[i,j] >= tau)
-
-    for p_idx, path in enumerate(all_simple_paths):
-        for i in range(len(path) - 1):
-            u, v = path[i], path[i+1]
-            edge = tuple(sorted((u,v)))
-            m.addConstr(psi[p_idx] <= z[edge])
-
-    for pop_id in population_df['id']:
-        paths_for_pop = pop_paths.get(pop_id, [])
-        path_indices = [i for i, p in enumerate(all_simple_paths) if p in paths_for_pop]
-        if path_indices:
-            m.addConstr(phi[pop_id] <= gp.quicksum(psi[p_idx] for p_idx in path_indices))
-        else:
-            m.addConstr(phi[pop_id] == 0)
+    for id in range(len(population_density)):
+        for destination_id, destination in enumerate(destination_cell2destination_airport):
+            s = []
+            for path in population_cells_paths[id]:
+                for j, _ in enumerate(attractive_paths):
+                    if np.array_equal(_,path) and path[-1] in destination_cell2destination_airport[destination]:
+                        s.append(psi[j])
+            m.addConstr(phi[id, destination_id] <= gp.quicksum(s))
 
     m.setParam('TimeLimit', 600)
     m.optimize()
 
     return m
-
-

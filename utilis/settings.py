@@ -23,6 +23,8 @@ class PopulationConfig:
 class AirportsConfig:
     num: int
     min_distance: int
+    min_cost: int
+    max_cost: int
 
 
 @dataclass
@@ -41,6 +43,12 @@ class GroundAccessConfig:
 class PathsConfig:
     max_edges: int
     routing_factor_thr: float
+
+@dataclass
+class ModelConfig:
+    epsilon: int
+    mu_1: int
+    mu_2: int
 
 
 @dataclass
@@ -66,6 +74,7 @@ class Settings:
     aircraft_config: AircraftConfig
     ground_access_config: GroundAccessConfig
     paths_config: PathsConfig
+    model_config: ModelConfig
     logging_lvl: int
     print_logs: bool
 

@@ -165,7 +165,7 @@ def get_pop_density(population_coords: np.ndarray, min_density: int = 0, max_den
     return np.random.randint(min_density, max_density, size=len(population_coords))
 
 
-def get_destination_airports(destination_cells, population_cells_near_airports) -> np.ndarray:
+def get_destination_airports(destination_cells, population_cells_near_airports) -> tuple[np.ndarray,dict]:
     """
     Returns a NumPy array of destination airports indices close to the destination cells.
 
@@ -178,9 +178,27 @@ def get_destination_airports(destination_cells, population_cells_near_airports) 
         np.ndarray: A NumPy array of destination airports indices close to the destination cells.
     """
     destination_airports = []
+    destination_cell2destination_airports = {destination_cell : [] for destination_cell in destination_cells}
     for airport in population_cells_near_airports.keys():
         for destination_cell in destination_cells:
             if destination_cell in population_cells_near_airports[airport]:
                 destination_airports.append(airport)
+                destination_cell2destination_airports[destination_cell].append(airport)
 
-    return np.array(destination_airports)
+    return np.array(destination_airports), destination_cell2destination_airports
+
+
+def get_activation_cost_airports(num_airports: int, min_cost: int, max_cost: int) -> np.ndarray:
+    """
+    Returns a NumPy array of random activation costs for each airport.
+    Args:
+        num_airports (int): Number of nodes to generate.
+        min_cost (int): Minimum activation cost.
+        max_cost (int): Maximum activation cost.
+
+    Returns:
+        np.ndarray: A NumPy array of random activation costs for each airport.
+    """
+    _logger.info("Generated random activation cost for each airport")
+
+    return np.random.randint(min_cost, max_cost, size=num_airports)

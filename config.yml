@@ -6,11 +6,13 @@ population_config:
   cell_area: 2250 # total area of 450,000 square kilometers
   min_density: 0
   max_density: 50000
-  destination_cells: [25, 61] # 61+15 to get multi airport as destination
+  destination_cells: [28, 61] # 61+15 to get multi airport as destination
 
 airports_config:
-  num: 10 # 7 is interesting
+  num: 9 # 7 is interesting
   min_distance: 30 # km
+  min_cost: 1
+  max_cost: 2
 
 aircraft_config:
   tau: 400 # single charge range
@@ -24,5 +26,10 @@ paths_config:
   max_edges: 3 # maximum of 3 adjacent edges (maximum of 2 intermediate airports)
   routing_factor_thr: 1.4 # ratio between the path’s total flight distance and the nonstop flight distance
 
+model_config:
+  epsilon: 1
+  mu_1: 10
+  mu_2: 1000
+
 logging_lvl: 20 # 10: Debug; 20: info
-print_logs: True
+print_logs: False

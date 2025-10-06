@@ -25,7 +25,7 @@ def  create_threshold_graph(distances: dict, tau: float, mode: str = "below") ->
     for (i, j), d in distances.items():
         if (mode == "below" and d <= tau) or (mode == "above" and d > tau):
             graph.add_edge(i, j, weight=d)
-    _logger.info("Created graph with distance threshold {} tau, {} edges and {} nodes (tau={}km)".
+    _logger.info("Created graph with distance threshold {} tau, with {} edges and {} nodes (tau={}km)".
                  format(mode, len(graph.edges), len(graph.nodes), tau))
 
     return graph
@@ -70,7 +70,7 @@ def get_attractive_paths(paths: np.ndarray, distances: dict, routing_factor_thr:
         if routing_factor <= routing_factor_thr:
             attractive_paths.append(path)
 
-    _logger.info("Removed {} unattractive based on the routing factor threshold (routing_factor_thr={})".format(
+    _logger.info("Removed {} unattractive paths based on the routing factor threshold (routing_factor_thr={})".format(
         len(paths) - len(attractive_paths), routing_factor_thr))
 
     return np.array(attractive_paths, dtype=object)
@@ -128,3 +128,28 @@ def get_population_cells_paths(population_coords, paths: np.ndarray,
             population_cells_paths[pop].append(simple_path)
 
     return population_cells_paths
+
+
+def get_active_airports(attractive_paths):
+    active_airports = []
+    for path in attractive_paths:
+        for airport in path:
+            if airport not in active_airports:
+                active_airports.append(airport)
+    active_airports = np.array(sorted(active_airports))
+    _logger.info("Active airports from the attractive paths: {}".format(active_airports))
+    return active_airports
+
+def get_active_graph(attractive_paths, airports_distances):
+    graph = nx.Graph()
+
+    for path in attractive_paths:
+        for i in range(len(path)-1):
+            if path[i] < path[i+1]:
+                weight = airports_distances[path[i],path[i+1]]
+            else:
+                weight = airports_distances[path[i+1],path[i]]
+            graph.add_edge(path[i], path[i+1], weight=weight)
+
+    _logger.info("Created active graph with {} edges and {} nodes".format(len(graph.edges), len(graph.nodes)))
+    return graph
