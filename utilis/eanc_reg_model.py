@@ -106,5 +106,6 @@ def solve_eacn_model(population_density, attractive_paths, activation_costs, act
 
     m.setParam('TimeLimit', 600)
     m.optimize()
+    m.write("model.lp")
 
     return m
