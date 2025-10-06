@@ -20,10 +20,10 @@ def calculate_tight_big_m(active_graph):
         neighbors_j = list(active_graph.neighbors(airport_j))
 
         min_dist_from_j = min(active_graph.edges[airport_j,neighbor]['weight'] for neighbor in neighbors_j)
+        min_dist_from_i = min(active_graph.edges[airport_i,neighbor]['weight'] for neighbor in neighbors_i)
+
         m2_vals[edge] = (active_graph.edges[airport_i,airport_j]['weight'] + settings.aircraft_config.tau - min_dist_from_j +
                          settings.model_config.epsilon)
-
-        min_dist_from_i = min(active_graph.edges[airport_i,neighbor]['weight'] for neighbor in neighbors_i)
         m3_vals[edge] = (active_graph.edges[airport_i,airport_j]['weight'] + settings.aircraft_config.tau - min_dist_from_i -
                          min_dist_from_j + settings.model_config.epsilon * 2)
 
@@ -82,8 +82,6 @@ def solve_eacn_model(population_density, attractive_paths, activation_costs, act
     for airport_i, airport_j in canonical_edges:
         m.addConstr(active_graph.edges[airport_i, airport_j]['weight'] + rho[airport_i] + rho[airport_j] <=
                     settings.aircraft_config.tau + m3_vals[airport_i, airport_j] * (1 - z[airport_i, airport_j])) # 4
-
-    for airport_i, airport_j in canonical_edges:
         m.addConstr(z[airport_i, airport_j] <= 1 - chi[airport_i]) # 21
         m.addConstr(z[airport_i, airport_j] <= 1 - chi[airport_j]) # 22
         m4_ij = settings.aircraft_config.tau - active_graph.edges[airport_i, airport_j]['weight']

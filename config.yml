@@ -9,7 +9,7 @@ population_config:
   destination_cells: [28, 61] # 61+15 to get multi airport as destination
 
 airports_config:
-  num: 9 # 7 is interesting
+  num: 10 # 7 is interesting
   min_distance: 30 # km
   min_cost: 1
   max_cost: 2
@@ -27,8 +27,8 @@ paths_config:
   routing_factor_thr: 1.4 # ratio between the path’s total flight distance and the nonstop flight distance
 
 model_config:
-  epsilon: 1
-  mu_1: 10
+  epsilon: 10
+  mu_1: 100
   mu_2: 1000
 
 logging_lvl: 20 # 10: Debug; 20: info
