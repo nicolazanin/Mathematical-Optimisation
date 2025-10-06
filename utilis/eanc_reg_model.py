@@ -13,18 +13,18 @@ def calculate_tight_big_m(active_graph):
 
     m2_vals = {}
     m3_vals = {}
-    for airport_i, airport_j in active_graph.edges():
-        edge = tuple(sorted((airport_i, airport_j)))
+    for i, j in active_graph.edges():
+        edge = tuple(sorted((i, j)))
 
-        neighbors_i = list(active_graph.neighbors(airport_i))
-        neighbors_j = list(active_graph.neighbors(airport_j))
+        neighbors_i = list(active_graph.neighbors(edge[0]))
+        neighbors_j = list(active_graph.neighbors(edge[1]))
 
-        min_dist_from_j = min(active_graph.edges[airport_j,neighbor]['weight'] for neighbor in neighbors_j)
-        min_dist_from_i = min(active_graph.edges[airport_i,neighbor]['weight'] for neighbor in neighbors_i)
+        min_dist_from_j = min(active_graph.edges[edge[1],neighbor]['weight'] for neighbor in neighbors_j)
+        min_dist_from_i = min(active_graph.edges[edge[0],neighbor]['weight'] for neighbor in neighbors_i)
 
-        m2_vals[edge] = (active_graph.edges[airport_i,airport_j]['weight'] + settings.aircraft_config.tau - min_dist_from_j +
+        m2_vals[edge] = (active_graph.edges[edge[0],edge[1]]['weight'] + settings.aircraft_config.tau - min_dist_from_j +
                          settings.model_config.epsilon)
-        m3_vals[edge] = (active_graph.edges[airport_i,airport_j]['weight'] + settings.aircraft_config.tau - min_dist_from_i -
+        m3_vals[edge] = (active_graph.edges[edge[0],edge[1]]['weight'] + settings.aircraft_config.tau - min_dist_from_i -
                          min_dist_from_j + settings.model_config.epsilon * 2)
 
     return m1_vals, m2_vals, m3_vals
@@ -98,9 +98,10 @@ def solve_eacn_model(population_density, attractive_paths, activation_costs, act
         for destination_id, destination in enumerate(destination_cell2destination_airport):
             s = []
             for path in population_cells_paths[id]:
-                for j, _ in enumerate(attractive_paths):
-                    if np.array_equal(_,path) and path[-1] in destination_cell2destination_airport[destination]:
-                        s.append(psi[j])
+                if path[-1] in destination_cell2destination_airport[destination]:
+                    for j, _ in enumerate(attractive_paths):
+                        if np.array_equal(_,path):
+                            s.append(psi[j])
             m.addConstr(phi[id, destination_id] <= gp.quicksum(s))
 
     m.setParam('TimeLimit', 600)

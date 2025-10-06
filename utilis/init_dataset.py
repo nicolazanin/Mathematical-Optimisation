@@ -200,5 +200,7 @@ def get_activation_cost_airports(num_airports: int, min_cost: int, max_cost: int
         np.ndarray: A NumPy array of random activation costs for each airport.
     """
     _logger.info("Generated random activation cost for each airport")
-
-    return np.random.randint(min_cost, max_cost, size=num_airports)
+    if min_cost == max_cost:
+        return np.array([min_cost for _ in range(num_airports)])
+    else:
+        return np.random.randint(min_cost, max_cost, size=num_airports)
