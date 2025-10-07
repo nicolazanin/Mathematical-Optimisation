@@ -161,8 +161,10 @@ def get_pop_density(population_coords: np.ndarray, min_density: int = 0, max_den
         np.ndarray: A NumPy array of population density values (integers) with the same length as `population_coords`.
     """
     _logger.info("Generated random population density for each population grid cell")
-
-    return np.random.randint(min_density, max_density, size=len(population_coords))
+    if min_density == max_density:
+        return np.array([min_density for _ in range(len(population_coords))])
+    else:
+        return np.random.randint(min_density, max_density, size=len(population_coords))
 
 
 def get_destination_airports(destination_cells, population_cells_near_airports) -> tuple[np.ndarray,dict]:
