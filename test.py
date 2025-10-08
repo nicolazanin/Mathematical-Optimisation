@@ -1,12 +1,15 @@
 import sys
+
+import numpy as np
 import pandas as pd
 from gurobipy import GRB
 import logging
 import time
 
 from utilis.init_dataset import (cells_generation, nodes_generation, get_population_cells_near_airports,
-                                 get_pop_density, nodes_distances, grid_dimensions, get_destination_airports,
-                                 get_activation_cost_airports)
+                                 get_pop_density, nodes_distances, grid_dimensions,
+                                 get_destination_cell2destination_airports, get_activation_cost_airports,
+                                 get_closest_airport_from_destination_cell)
 from utilis.preprocessing import (create_threshold_graph, get_attractive_paths, get_all_paths_to_destinations,
                                   get_population_cells_paths, get_active_airports, get_active_graph)
 from utilis.plot import plot_dataset
@@ -42,21 +45,37 @@ activation_costs = get_activation_cost_airports(num_airports=settings.airports_c
                                                 min_cost=settings.airports_config.min_cost)
 airports_distances = nodes_distances(nodes_coords=airports_coords)
 
-_logger.info("-------------- Define simple paths --------------")
+_logger.info("-------------- Define Destination Airport/s --------------")
 max_ground_distance = settings.ground_access_config.avg_speed * settings.ground_access_config.max_time / 60
 population_cells_near_airports = get_population_cells_near_airports(airports_coords=airports_coords,
                                                                     population_coords=population_coords,
                                                                     max_ground_distance=max_ground_distance)
-destination_airports, destination_cell2destination_airports = get_destination_airports(
-    destination_cells=settings.population_config.destination_cells,
-    population_cells_near_airports=population_cells_near_airports)
+if settings.model_config.closest_airport_to_destination_cell:
+    destination_cell2destination_airports = {
+        settings.population_config.destination_cells[0]: [get_closest_airport_from_destination_cell(
+            airports_coords=airports_coords, population_coords=population_coords,
+            destination_cell=settings.population_config.destination_cells[0])]}
+    _logger.info("Destination airport based on the minimum distance from the first destination cell.")
+    destination_airports = [destination_airport for airports in destination_cell2destination_airports.values()
+                            for destination_airport in airports]
+    _logger.info("For destination cells {}, the selected destination airports is: {}".
+                 format(settings.population_config.destination_cells[0], destination_airports))
 
-_logger.info("For destination cells {}, the selected destination airports are {} based on the maximum ground distance."
-             .format(settings.population_config.destination_cells, destination_airports))
+else:
+    destination_cell2destination_airports = get_destination_cell2destination_airports(
+        destination_cells=settings.population_config.destination_cells,
+        population_cells_near_airports=population_cells_near_airports)
+    _logger.info("Destination airports based on the maximum ground distance from the destination cells")
+    destination_airports = [destination_airport for airports in destination_cell2destination_airports.values()
+                            for destination_airport in airports]
+    _logger.info("For destination cells {}, the selected destination airports is/are: {}".
+                 format(settings.population_config.destination_cells, destination_airports))
 
 if len(destination_airports) == 0:
     _logger.error("Empty destination airports list.")
     sys.exit()
+
+destination_airports = np.array(destination_airports)
 
 _logger.info("------------- Pre-Processing --------------")
 # Create two graph to identify the edges above and below the distance threshold tau (single charge range)
@@ -64,6 +83,8 @@ airports_graph_below_tau = create_threshold_graph(distances=airports_distances,
                                                   tau=settings.aircraft_config.tau)
 airports_graph_above_tau = create_threshold_graph(distances=airports_distances,
                                                   tau=settings.aircraft_config.tau, mode='above')
+
+_logger.info("-------------- Define Paths --------------")
 all_paths = get_all_paths_to_destinations(graph=airports_graph_below_tau,
                                           destination_airports=destination_airports,
                                           max_path_edges=settings.paths_config.max_edges)
@@ -80,34 +101,32 @@ population_cells_paths = get_population_cells_paths(population_coords=population
 _logger.info("-------------- MILP Optimization --------------")
 m = solve_eacn_model(population_density, attractive_paths, activation_costs, active_graph, active_airports,
                      population_cells_paths, destination_cell2destination_airports)
-active_bases = []
+charging_airports = []
 if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
 
     all_vars = m.getVars()
     y_vars = [v for v in all_vars if v.VarName.startswith('y[')]
     psi_vars = [v for v in all_vars if v.VarName.startswith('psi[')]
 
-    active_bases = [int(v.VarName[2:-1]) for v in y_vars if v.X > 0.5]
-    _logger.info("Basi di Ricarica Attive ({}): {}".format(len(active_bases), str(active_bases)))
+    charging_airports = [v.index for v in y_vars if v.X > 0.5]
+    active_path_indices = [v.index for v in psi_vars if v.X > 0.5]
+    _logger.info("Charging airports: {}".format(str(charging_airports)))
 
-    _logger.info(f"Valore Funzione Obiettivo: {m.ObjVal:,.2f}")
-    _logger.info(f"MIP Gap: {m.MIPGap:.4%}")
+    nObjectives = m.NumObj
+    nSolutions = m.SolCount
+    for s in range(nSolutions):
+        m.params.SolutionNumber = s
+        obj_vals = []
+        for o in range(nObjectives):
+            m.params.ObjNumber = o
+            obj_vals.append(m.ObjNVal)
+        _logger.info("Solutions {}: {} ".format(s, obj_vals))
+
+    if not active_path_indices:
+        _logger.info("Nessun percorso è risultato fattibile nella soluzione trovata.")
 
 else:
     _logger.info("Nessuna soluzione trovata. Stato Gurobi:", m.Status)
-
-if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
-
-    all_vars = m.getVars()
-    psi_vars = [v for v in all_vars if v.VarName.startswith('psi[')]
-
-    active_path_indices = [int(v.VarName[4:-1]) for v in psi_vars if v.X > 0.5]
-    solution_paths = [attractive_paths[i] for i in active_path_indices]
-
-    if not solution_paths:
-        _logger.info("Nessun percorso è risultato fattibile nella soluzione trovata.")
-else:
-    _logger.info("Nessuna soluzione valida trovata. Impossibile visualizzare i percorsi.")
 
 if settings.airports_config.num > 20:
     _logger.info("Plot skipped due to the large dataset")
@@ -120,6 +139,6 @@ else:
                  destination_cells=settings.population_config.destination_cells,
                  max_ground_distance=max_ground_distance, all_paths=all_paths,
                  attractive_paths=attractive_paths,
-                 population_cells_near_airports=population_cells_near_airports, charging_airports=active_bases)
+                 population_cells_near_airports=population_cells_near_airports, charging_airports=charging_airports)
 
 _logger.info("Total execution time for EACN-REG: {:.1f} minutes".format((time.time() - tic) / 60))

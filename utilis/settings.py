@@ -47,8 +47,10 @@ class PathsConfig:
 @dataclass
 class ModelConfig:
     epsilon: int
-    mu_1: int
-    mu_2: int
+    mu_1: float
+    mu_2: float
+    closest_airport_to_destination_cell: bool
+    lexicographic: bool
 
 
 @dataclass

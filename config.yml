@@ -1,15 +1,13 @@
-# To achieve maximum scalability, the grid is built using the number of cells along the X and Y axes, as well as the
-# area of a single cell.
 population_config:
-  cells_x: 10
-  cells_y: 10
+  cells_x: 10   # To achieve maximum scalability, the grid is built using the number of cells along the X and Y axes,
+  cells_y: 10   # as well as the area of a single cell.
   cell_area: 4500 # total area of 450,000 square kilometers
   min_density: 1
   max_density: 1
-  destination_cells: [34]
+  destination_cells: [9, 3]
 
 airports_config:
-  num: 50 # 7 is interesting
+  num: 20 # 7 is interesting
   min_distance: 30 # km
   min_cost: 1
   max_cost: 1
@@ -29,7 +27,12 @@ paths_config:
 model_config:
   epsilon: 10
   mu_1: 1
-  mu_2: 1
+  mu_2: 0.01
+  closest_airport_to_destination_cell: True # if True the destination airport will be the closest one to the first
+                                            # destination cell. Otherwise, given a set of destination cells the
+                                            # destination airports will be the ones within a specified maximum ground
+                                            # distance from the destination cell
+  lexicographic: True
 
-logging_lvl: 20 # 10: Debug; 20: info
-print_logs: True
+logging_lvl: 20 # 10: debug; 20: info
+print_logs: False

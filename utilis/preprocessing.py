@@ -5,7 +5,7 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-def  create_threshold_graph(distances: dict, tau: float, mode: str = "below") -> nx.Graph:
+def create_threshold_graph(distances: dict, tau: float, mode: str = "below") -> nx.Graph:
     """
     Creates a single undirected graph by including edges based on a distance threshold.
 
@@ -77,7 +77,7 @@ def get_attractive_paths(paths: np.ndarray, distances: dict, routing_factor_thr:
 
 
 def get_all_paths_to_destinations(graph: nx.Graph, destination_airports: np.ndarray,
-                                         max_path_edges: int) -> np.ndarray:
+                                  max_path_edges: int) -> np.ndarray:
     """
     Finds all paths from all non-destination airport nodes (path origin) to any of the destination nodes in a graph, up
     to a specified maximum path length.
@@ -97,6 +97,8 @@ def get_all_paths_to_destinations(graph: nx.Graph, destination_airports: np.ndar
             paths = nx.all_simple_paths(graph, source=source_node, target=destination_airports,
                                         cutoff=max_path_edges)
             all_paths.extend(list(paths))
+    _logger.info("Defined {} simple paths to destination airport/s: {}".format(len(all_paths),
+                                                                               destination_airports))
 
     return np.array(all_paths, dtype=object)
 
@@ -140,16 +142,17 @@ def get_active_airports(attractive_paths):
     _logger.info("Active airports from the attractive paths: {}".format(active_airports))
     return active_airports
 
+
 def get_active_graph(attractive_paths, airports_distances):
     graph = nx.Graph()
 
     for path in attractive_paths:
-        for i in range(len(path)-1):
-            if path[i] < path[i+1]:
-                weight = airports_distances[path[i],path[i+1]]
+        for i in range(len(path) - 1):
+            if path[i] < path[i + 1]:
+                weight = airports_distances[path[i], path[i + 1]]
             else:
-                weight = airports_distances[path[i+1],path[i]]
-            graph.add_edge(path[i], path[i+1], weight=weight)
+                weight = airports_distances[path[i + 1], path[i]]
+            graph.add_edge(path[i], path[i + 1], weight=weight)
 
     _logger.info("Created active graph with {} edges and {} nodes".format(len(graph.edges), len(graph.nodes)))
     return graph
