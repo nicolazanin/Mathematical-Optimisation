@@ -117,9 +117,12 @@ if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
     for s in range(nSolutions):
         m.params.SolutionNumber = s
         obj_vals = []
-        for o in range(nObjectives):
-            m.params.ObjNumber = o
-            obj_vals.append(m.ObjNVal)
+        if settings.model_config.lexicographic:
+            for o in range(nObjectives):
+                m.params.ObjNumber = o
+                obj_vals.append(m.ObjNVal)
+        else:
+            obj_vals = [m.ObjVal]
         _logger.info("Solutions {}: {} ".format(s, obj_vals))
 
     if not active_path_indices:

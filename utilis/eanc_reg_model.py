@@ -23,17 +23,18 @@ def calculate_tight_big_m(active_graph):
         min_dist_from_i = min(active_graph.edges[edge[0], neighbor]['weight'] for neighbor in neighbors_i)
 
         m2_vals[edge] = (
-                active_graph.edges[edge[0], edge[1]]['weight'] + settings.aircraft_config.tau - min_dist_from_j +
-                settings.model_config.epsilon)
+                    active_graph.edges[edge[0], edge[1]]['weight'] + settings.aircraft_config.tau - min_dist_from_j +
+                    settings.model_config.epsilon)
         m3_vals[edge] = (
-                active_graph.edges[edge[0], edge[1]]['weight'] + settings.aircraft_config.tau - min_dist_from_i -
-                min_dist_from_j + settings.model_config.epsilon * 2)
+                    active_graph.edges[edge[0], edge[1]]['weight'] + settings.aircraft_config.tau - min_dist_from_i -
+                    min_dist_from_j + settings.model_config.epsilon * 2)
 
     return m1_vals, m2_vals, m3_vals
 
 
 def solve_eacn_model(population_density, attractive_paths, activation_costs, active_graph, active_airports,
                      population_cells_paths, destination_cell2destination_airport):
+
     m1_vals, m2_vals, m3_vals = calculate_tight_big_m(active_graph)
 
     m = gp.Model("EACN_REG")
@@ -58,8 +59,10 @@ def solve_eacn_model(population_density, attractive_paths, activation_costs, act
     installation_cost = np.array(activation_costs[active_airports] * [y[i] for i in range(len(active_airports))]).sum()
 
     if not settings.model_config.lexicographic:
-        objective_func = settings.model_config.mu_1 * population_covered - settings.model_config.mu_2 * installation_cost
-        m.setObjective(objective_func, GRB.MAXIMIZE)
+        m.setObjectiveN(population_covered, index=0, priority=1, weight=-settings.model_config.mu_1)
+        m.setObjectiveN(installation_cost, index=1, priority=1, weight=settings.model_config.mu_2)
+        # objective_func = settings.model_config.mu_1 * population_covered - settings.model_config.mu_2 * installation_cost
+        # m.setObjective(objective_func, GRB.MAXIMIZE)
     else:
         m.setObjectiveN(population_covered, index=0, priority=2, weight=-1)
         m.setObjectiveN(installation_cost, index=1, priority=1, weight=1)
