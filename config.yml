@@ -36,3 +36,4 @@ model_config:
 
 logging_lvl: 20 # 10: debug; 20: info
 print_logs: False
+plot: False

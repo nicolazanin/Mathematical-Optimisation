@@ -59,6 +59,7 @@ def get_population_heatmap(population_coords: np.ndarray, population_density: np
         name="Population Cell",
         hovertemplate="Population density: %{z} people/km² <extra></extra>",
         legend="legend1",
+        visible=True,
     )
 
     return density_heatmap
@@ -578,7 +579,8 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
                  airport_distances: dict, graph_below_tau: nx.Graph, graph_above_tau: nx.Graph,
                  destination_airports: np.ndarray, destination_cells: list, max_ground_distance: float,
                  all_paths: np.ndarray, attractive_paths: np.ndarray, population_cells_near_airports: dict,
-                 charging_airports: list) -> None:
+                 charging_airports: list, active_path_indices: np.ndarray,
+                 closest_airport_to_destination_cell: bool) -> None:
     """
     Main function to plot the full dataset.
 
@@ -601,6 +603,10 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
         population_cells_near_airports (dict): A dictionary where each key is an airport index, and each value is a list
         of indices of population cells located within the specified distance from that airport.
         charging_airports (list): A list of airports indices representing the bases.
+        active_path_indices (np.ndarray): A NumPy array of active paths indices.
+        closest_airport_to_destination_cell (bool): If True, the destination airport is chosen based on the minimum
+        distance from the first destination cell and not on the maximum ground distance (no need to plot max ground
+        distance from destination cells)
 
     Return:
         none
@@ -633,15 +639,24 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
                                             graph=graph_below_tau, above=False)
     fig.add_traces(connections_below_tau)
 
-    paths = get_paths(airports_coords=airports_coords, paths=all_paths, attractive=False)
+    paths = get_paths(airports_coords=airports_coords, paths=all_paths[:50], attractive=False)
     fig.add_traces(paths)
 
+    active = [len(fig.data) + i for i in active_path_indices]
     paths = get_paths(airports_coords=airports_coords, paths=attractive_paths)
     fig.add_traces(paths)
 
     path_origins_population_cells = get_paths_origins_population_cells(population_coords=population_coords,
                                                                        paths=attractive_paths,
                                                                        population_cells_near_airports=population_cells_near_airports)
+    new_legend_group = path_origins_population_cells[0].legendgroup
+    new_path_index = 0
+    for i, path in enumerate(path_origins_population_cells):
+        if new_legend_group != path.legendgroup:
+            new_path_index += 1
+            new_legend_group = path.legendgroup
+        if new_path_index in active_path_indices:
+            active.append(len(fig.data) + i)
     fig.add_traces(path_origins_population_cells)
 
     ground_dist_paths_origins_airports = get_ground_dist_paths_origins_airports(airports_coords=airports_coords,
@@ -721,7 +736,7 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
         ),
         legend3=dict(
             title=dict(
-                text="Paths:",
+                text="Paths (first 50):",
                 font=dict(
                     size=13,
                     weight="bold"
@@ -788,12 +803,12 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
                     dict(
                         label="Show Heatmap",
                         method="update",
-                        args=[{"visible": get_visibility(0, visibility, True)}, ]
+                        args=[{"visible": get_visibility([0], visibility, True)}]
                     ),
                     dict(
                         label="Hide Heatmap",
                         method="update",
-                        args=[{"visible": get_visibility(0, visibility, False)}],
+                        args=[{"visible": get_visibility([0], visibility, False)}],
                     )
                 ],
                 direction="down",
@@ -824,15 +839,38 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
                 xanchor="right",
                 yanchor="bottom",
                 pad={"r": 5, "t": 5}
+            ),
+            dict(
+                buttons=[
+                    dict(
+                        label="Hide Active Paths",
+                        method="update",
+                        args=[{"visible": get_visibility(active, visibility, 'legendonly')}],
+                    ),
+                    dict(
+                        label="Show Active Paths",
+                        method="update",
+                        args=[{"visible": get_visibility(active, visibility, True)}],
+                    ),
+                ],
+                direction="down",
+                showactive=True,
+                x=0.8,
+                y=1.02,
+                xanchor="right",
+                yanchor="bottom",
+                pad={"r": 5, "t": 5}
             )
         ]
     )
+    fig.layout.plot_bgcolor = 'rgb(250, 245, 250)'
     fig.show()
 
 
-def get_visibility(idx, visibility, status)->list:
+def get_visibility(indices, visibility, status) -> list:
     """
     Helper to control visibility of the data in the plot
     """
-    visibility[idx] = status
+    for idx in indices:
+        visibility[idx] = status
     return [ii for ii in visibility]

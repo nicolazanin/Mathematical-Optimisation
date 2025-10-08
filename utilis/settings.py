@@ -79,6 +79,7 @@ class Settings:
     model_config: ModelConfig
     logging_lvl: int
     print_logs: bool
+    plot: bool
 
     @classmethod
     def from_yaml(cls, path: str) -> "Settings":

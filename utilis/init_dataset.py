@@ -185,7 +185,7 @@ def get_pop_density(population_coords: np.ndarray, min_density: int = 0, max_den
         return np.random.randint(min_density, max_density, size=len(population_coords))
 
 
-def get_destination_cell2destination_airports(destination_cells: list, population_cells_near_airports: dict) -> dict:
+def get_destination_cells2destination_airports(destination_cells: list, population_cells_near_airports: dict) -> dict:
     """
     Returns a dictionary where each key is a destination cell index, and each value is a list of destination airports
     indices close to the destination cells (within a specified maximum ground distance from the destination cell).
@@ -198,13 +198,13 @@ def get_destination_cell2destination_airports(destination_cells: list, populatio
     Returns:
         dict: A NumPy array of destination airports indices close to the destination cells.
     """
-    destination_cell2destination_airports = {destination_cell: [] for destination_cell in destination_cells}
+    destination_cells2destination_airports = {destination_cell: [] for destination_cell in destination_cells}
     for airport in population_cells_near_airports.keys():
         for destination_cell in destination_cells:
             if destination_cell in population_cells_near_airports[airport]:
-                destination_cell2destination_airports[destination_cell].append(airport)
+                destination_cells2destination_airports[destination_cell].append(airport)
 
-    return destination_cell2destination_airports
+    return destination_cells2destination_airports
 
 
 def get_activation_cost_airports(num_airports: int, min_cost: int, max_cost: int) -> np.ndarray:

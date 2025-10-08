@@ -33,7 +33,7 @@ def calculate_tight_big_m(active_graph):
 
 
 def solve_eacn_model(population_density, attractive_paths, activation_costs, active_graph, active_airports,
-                     population_cells_paths, destination_cell2destination_airport):
+                     population_cells_paths, destination_cells2destination_airports):
 
     m1_vals, m2_vals, m3_vals = calculate_tight_big_m(active_graph)
 
@@ -52,10 +52,10 @@ def solve_eacn_model(population_density, attractive_paths, activation_costs, act
 
     psi = m.addVars(len(attractive_paths), vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="psi")
     phi = m.addVars([(i, j) for i in range(len(population_density)) for j in
-                     range(len(destination_cell2destination_airport.keys()))], vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0,
+                     range(len(destination_cells2destination_airports.keys()))], vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0,
                     name="phi")
     population_covered = np.array([population_density[id] * phi[id, _] for id in range(len(population_density)) for _ in
-                                   range(len(destination_cell2destination_airport.keys()))]).sum()
+                                   range(len(destination_cells2destination_airports.keys()))]).sum()
     installation_cost = np.array(activation_costs[active_airports] * [y[i] for i in range(len(active_airports))]).sum()
 
     if not settings.model_config.lexicographic:
@@ -100,9 +100,9 @@ def solve_eacn_model(population_density, attractive_paths, activation_costs, act
             m.addConstr(psi[id] <= z[edge])  # 5
 
     for id in range(len(population_density)):
-        for destination_id, destination in enumerate(destination_cell2destination_airport):
+        for destination_id, destination in enumerate(destination_cells2destination_airports):
             path_indices = [i for i, p in enumerate(attractive_paths) if
-                            p in population_cells_paths[id] and p[-1] in destination_cell2destination_airport[
+                            p in population_cells_paths[id] and p[-1] in destination_cells2destination_airports[
                                 destination]]
             if path_indices:
                 m.addConstr(phi[id, destination_id] <= gp.quicksum(psi[p_id] for p_id in path_indices))
