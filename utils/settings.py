@@ -77,6 +77,7 @@ class Settings:
     ground_access_config: GroundAccessConfig
     paths_config: PathsConfig
     model_config: ModelConfig
+    random_seed: int
     logging_lvl: int
     print_logs: bool
     plot: bool

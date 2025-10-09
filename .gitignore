@@ -13,3 +13,6 @@ venv/
 
 #logs
 *log_file.txt
+
+#gurobi model
+*.lp

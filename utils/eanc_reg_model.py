@@ -1,7 +1,7 @@
 import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
-from utilis.settings import settings
+from utils.settings import settings
 
 
 def calculate_tight_big_m(active_graph):

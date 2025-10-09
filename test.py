@@ -6,15 +6,15 @@ from gurobipy import GRB
 import logging
 import time
 
-from utilis.init_dataset import (cells_generation, nodes_generation, get_population_cells_near_airports,
-                                 get_pop_density, nodes_distances, grid_dimensions,
-                                 get_destination_cells2destination_airports, get_activation_cost_airports,
-                                 get_closest_airport_from_destination_cell)
-from utilis.preprocessing import (create_threshold_graph, get_attractive_paths, get_all_paths_to_destinations,
-                                  get_population_cells_paths, get_active_airports, get_active_graph)
-from utilis.plot import plot_dataset
-from utilis.eanc_reg_model import solve_eacn_model
-from utilis.settings import settings, setup_logging
+from utils.init_dataset import (cells_generation, nodes_generation, get_population_cells_near_airports,
+                                get_pop_density, nodes_distances, grid_dimensions,
+                                get_destination_cells2destination_airports, get_activation_cost_airports,
+                                get_closest_airport_from_destination_cell)
+from utils.preprocessing import (create_threshold_graph, get_attractive_paths, get_all_paths_to_destinations,
+                                 get_population_cells_paths, get_active_airports, get_active_graph)
+from utils.plot import plot_dataset
+from utils.eanc_reg_model import solve_eacn_model
+from utils.settings import settings, setup_logging
 
 tic = time.time()
 
@@ -111,8 +111,8 @@ if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
     y_vars = [v for v in all_vars if v.VarName.startswith('y[')]
     psi_vars = [v for v in all_vars if v.VarName.startswith('psi[')]
 
-    charging_airports = [int(v.VarName[2:-1]) for v in y_vars if v.X > 0.5]
-    active_path_indices = np.array([int(v.VarName[4:-1]) for v in psi_vars if v.X > 0.5])
+    charging_airports = [int(v.VarName[2:-1]) for v in y_vars if v.X == 1]
+    active_path_indices = np.array([int(v.VarName[4:-1]) for v in psi_vars if v.X == 1])
     _logger.info("Charging airports: {}".format(str(charging_airports)))
 
     nObjectives = m.NumObj

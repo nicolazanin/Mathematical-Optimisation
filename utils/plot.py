@@ -264,6 +264,7 @@ def get_airport_icons(airports_coords: np.ndarray) -> go.Scatter:
         name="Airports",
         legendgroup="airports",
         showlegend=False,
+        hoverinfo="none",
         legend="legend1"
     )
 

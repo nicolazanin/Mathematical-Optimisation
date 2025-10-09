@@ -4,7 +4,7 @@ population_config:
   cell_area: 4500 # total area of 450,000 square kilometers
   min_density: 1
   max_density: 1
-  destination_cells: [9, 3]
+  destination_cells: [ 9, 3 ]
 
 airports_config:
   num: 20 # 7 is interesting
@@ -34,6 +34,7 @@ model_config:
                                             # distance from the destination cell
   lexicographic: True
 
+random_seed: 2
 logging_lvl: 20 # 10: debug; 20: info
 print_logs: False
-plot: False
+plot: True

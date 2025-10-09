@@ -1,9 +1,10 @@
 import numpy as np
 import logging
+from utils.settings import settings
 
 _logger = logging.getLogger(__name__)
 
-np.random.seed(2)
+np.random.seed(settings.random_seed)
 
 
 def nodes_generation(num_nodes: int,
