@@ -1,7 +1,5 @@
 import sys
-
 import numpy as np
-import pandas as pd
 from gurobipy import GRB
 import logging
 import time
@@ -22,7 +20,7 @@ setup_logging(log_prefix="EACN-REG", print_file=settings.print_logs)
 _logger = logging.getLogger(__name__)
 _logger.setLevel(settings.logging_lvl)
 
-_logger.info("-------------- EACN-REG starting --------------")
+_logger.info("-------------- EACN-REG test starting --------------")
 
 _logger.info("-------------- Initialize the population grid dataset --------------")
 population_coords = cells_generation(num_cells_x=settings.population_config.cells_x,
@@ -114,6 +112,7 @@ if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
     charging_airports = [int(v.VarName[2:-1]) for v in y_vars if v.X == 1]
     active_path_indices = np.array([int(v.VarName[4:-1]) for v in psi_vars if v.X == 1])
     _logger.info("Charging airports: {}".format(str(charging_airports)))
+    _logger.info("Active paths: {}".format(str(active_path_indices)))
 
     nObjectives = m.NumObj
     nSolutions = m.SolCount
