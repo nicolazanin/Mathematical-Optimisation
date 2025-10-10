@@ -9,9 +9,9 @@ from utils.init_dataset import (cells_generation, nodes_generation, get_populati
                                 get_destination_cells2destination_airports, get_activation_cost_airports,
                                 get_closest_airport_from_destination_cell)
 from utils.preprocessing import (create_threshold_graph, get_attractive_paths, get_all_paths_to_destinations,
-                                 get_population_cells_paths, get_active_airports, get_active_graph)
+                                 get_population_cells_paths, get_active_airports)
 from utils.plot import plot_dataset
-from utils.eanc_reg_model import solve_eacn_model
+from model.eanc_reg_model import solve_eacn_model
 from utils.settings import settings, setup_logging
 
 tic = time.time()
@@ -90,7 +90,6 @@ attractive_paths = get_attractive_paths(paths=all_paths,
                                         distances=airports_distances,
                                         routing_factor_thr=settings.paths_config.routing_factor_thr)
 active_airports = get_active_airports(attractive_paths=attractive_paths)
-active_graph = get_active_graph(attractive_paths=attractive_paths, airports_distances=airports_distances)
 
 population_cells_paths = get_population_cells_paths(population_coords=population_coords,
                                                     paths=attractive_paths,
@@ -98,9 +97,9 @@ population_cells_paths = get_population_cells_paths(population_coords=population
 
 _logger.info("-------------- MILP Optimization --------------")
 m = solve_eacn_model(population_density=population_density, attractive_paths=attractive_paths,
-                     activation_costs=activation_costs, active_graph=active_graph, active_airports=active_airports,
-                     population_cells_paths=population_cells_paths,
-                     destination_cells2destination_airports=destination_cells2destination_airports)
+                     activation_costs=activation_costs, airports_graph_below_tau = airports_graph_below_tau,
+                     active_airports=active_airports, population_cells_paths=population_cells_paths,
+                     destination_cells2destination_airports=destination_cells2destination_airports, ks=False)
 charging_airports = []
 active_path_indices = []
 if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
@@ -146,6 +145,6 @@ else:
                  attractive_paths=attractive_paths,
                  population_cells_near_airports=population_cells_near_airports, charging_airports=charging_airports,
                  active_path_indices=active_path_indices,
-                 closest_airport_to_destination_cell= settings.model_config.closest_airport_to_destination_cell)
+                 closest_airport_to_destination_cell=settings.model_config.closest_airport_to_destination_cell)
 
 _logger.info("Total execution time for EACN-REG: {:.1f} minutes".format((time.time() - tic) / 60))

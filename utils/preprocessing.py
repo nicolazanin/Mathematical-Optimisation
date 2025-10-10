@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
 import logging
+from collections import defaultdict
 
 _logger = logging.getLogger(__name__)
 
@@ -120,9 +121,7 @@ def get_population_cells_paths(population_coords, paths: np.ndarray,
         dict: A dictionary mapping each population cell index to a list of paths (each path is a list of node
         IDs) starting from an airport near that population cell.
     """
-    population_cells_paths = {}
-    for idx, pop in enumerate(population_coords):
-        population_cells_paths[idx] = []
+    population_cells_paths = defaultdict(list)
 
     for simple_path in paths:
         starting_airport = simple_path[0]
@@ -138,21 +137,15 @@ def get_active_airports(attractive_paths):
         for airport in path:
             if airport not in active_airports:
                 active_airports.append(airport)
-    active_airports = np.array(sorted(active_airports))
+    active_airports = sorted(active_airports)
     _logger.info("Active airports from the attractive paths: {}".format(active_airports))
     return active_airports
 
 
-def get_active_graph(attractive_paths, airports_distances):
-    graph = nx.Graph()
-
-    for path in attractive_paths:
-        for i in range(len(path) - 1):
-            if path[i] < path[i + 1]:
-                weight = airports_distances[path[i], path[i + 1]]
-            else:
-                weight = airports_distances[path[i + 1], path[i]]
-            graph.add_edge(path[i], path[i + 1], weight=weight)
-
-    _logger.info("Created active graph with {} edges and {} nodes".format(len(graph.edges), len(graph.nodes)))
-    return graph
+def remove_nodes_from_graph(graph, nodes_to_keep, print_action=False):
+    nodes_to_remove = [node for node in graph.nodes() if node not in nodes_to_keep]
+    active_graph = graph.copy()
+    active_graph.remove_nodes_from(nodes_to_remove)
+    if print_action:
+        _logger.info("Created active graph with {} edges and {} nodes".format(len(graph.edges), len(graph.nodes)))
+    return active_graph

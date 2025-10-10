@@ -10,7 +10,7 @@ from utils.init_dataset import (cells_generation, nodes_generation, get_populati
                                 get_closest_airport_from_destination_cell)
 from utils.preprocessing import (create_threshold_graph, get_attractive_paths, get_all_paths_to_destinations,
                                  get_population_cells_paths, get_active_airports, get_active_graph)
-from utils.eanc_reg_model import solve_eacn_model
+from model.eanc_reg_model import solve_eacn_model
 from utils.settings import settings, setup_logging
 
 
