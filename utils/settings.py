@@ -52,6 +52,13 @@ class ModelConfig:
     closest_airport_to_destination_cell: bool
     lexicographic: bool
 
+@dataclass
+class HeuristicConfig:
+    initial_kernel_size: int
+    bucket_size: int
+    iterations: int
+    max_run_time: int
+
 
 @dataclass
 class Settings:
@@ -77,6 +84,7 @@ class Settings:
     ground_access_config: GroundAccessConfig
     paths_config: PathsConfig
     model_config: ModelConfig
+    heuristic_config: HeuristicConfig
     random_seed: int
     logging_lvl: int
     print_logs: bool

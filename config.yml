@@ -32,7 +32,13 @@ model_config:
                                             # destination cell. Otherwise, given a set of destination cells the
                                             # destination airports will be the ones within a specified maximum ground
                                             # distance from the destination cell
-  lexicographic: True
+  lexicographic: False
+
+heuristic_config:
+  initial_kernel_size: 5
+  bucket_size: 10
+  iterations: 1
+  max_run_time: 8500
 
 random_seed: 2
 logging_lvl: 20 # 10: debug; 20: info
