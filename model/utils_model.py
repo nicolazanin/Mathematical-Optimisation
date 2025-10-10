@@ -1,5 +1,6 @@
-from collections import defaultdict
 import random
+import numpy as np
+from collections import defaultdict
 
 
 def calculate_tight_big_m(active_graph, tau, epsilon) -> tuple:
@@ -86,3 +87,25 @@ def get_buckets(airports, kernel, bucket_size) -> dict:
             end = (i + 1) * bucket_size
         buckets[i] = not_kernel[i * bucket_size:end]
     return buckets
+
+def get_outputs_from_model(m):
+    all_vars = m.getVars()
+    y_vars = [v for v in all_vars if v.VarName.startswith('y[')]
+    psi_vars = [v for v in all_vars if v.VarName.startswith('psi[')]
+
+    charging_airports = [int(v.VarName[2:-1]) for v in y_vars if v.X == 1]
+    active_path_indices = np.array([int(v.VarName[4:-1]) for v in psi_vars if v.X == 1])
+
+    nObjectives = m.NumObj
+    nSolutions = m.SolCount
+    solutions = defaultdict(list)
+    for s in range(nSolutions):
+        m.params.SolutionNumber = s
+        if nObjectives > 1:
+            for o in range(nObjectives):
+                m.params.ObjNumber = o
+                solutions[s].append(m.ObjNVal)
+        else:
+            solutions[s].append(m.ObjVal)
+
+    return charging_airports, active_path_indices, solutions

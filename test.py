@@ -10,6 +10,7 @@ from utils.init_dataset import (cells_generation, nodes_generation, get_populati
                                 get_closest_airport_from_destination_cell)
 from utils.preprocessing import (create_threshold_graph, get_attractive_paths, get_all_paths_to_destinations,
                                  get_population_cells_paths, get_active_airports)
+from model.utils_model import get_outputs_from_model
 from utils.plot import plot_dataset
 from model.eanc_reg_model import solve_eacn_model
 from utils.settings import settings, setup_logging
@@ -103,32 +104,11 @@ m = solve_eacn_model(population_density=population_density, attractive_paths=att
 charging_airports = []
 active_path_indices = []
 if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
-
-    all_vars = m.getVars()
-    y_vars = [v for v in all_vars if v.VarName.startswith('y[')]
-    psi_vars = [v for v in all_vars if v.VarName.startswith('psi[')]
-
-    charging_airports = [int(v.VarName[2:-1]) for v in y_vars if v.X == 1]
-    active_path_indices = np.array([int(v.VarName[4:-1]) for v in psi_vars if v.X == 1])
+    charging_airports, active_path_indices, solutions = get_outputs_from_model(m)
     _logger.info("Charging airports: {}".format(str(charging_airports)))
     _logger.info("Active paths: {}".format(str(active_path_indices)))
-
-    nObjectives = m.NumObj
-    nSolutions = m.SolCount
-    for s in range(nSolutions):
-        m.params.SolutionNumber = s
-        obj_vals = []
-        if settings.model_config.lexicographic:
-            for o in range(nObjectives):
-                m.params.ObjNumber = o
-                obj_vals.append(m.ObjNVal)
-        else:
-            obj_vals = [m.ObjVal]
-        _logger.info("Solutions {}: {} ".format(s, obj_vals))
-
-    if active_path_indices.size == 0:
-        _logger.info("No feasible path was found in the solution.")
-
+    for sol in solutions:
+        _logger.info("Solutions {}: {} ".format(sol, solutions[sol]))
 else:
     _logger.info("No feasible solution was found. Status:", m.Status)
 

@@ -3,7 +3,7 @@ import gurobipy as gp
 from gurobipy import GRB
 from utils.settings import settings
 
-from model.utils_model import calculate_tight_big_m, get_initial_kernel, get_buckets
+from model.utils_model import calculate_tight_big_m, get_initial_kernel, get_buckets, get_outputs_from_model
 from utils.preprocessing import remove_nodes_from_graph
 
 
@@ -19,15 +19,16 @@ def solve_eacn_model(population_density, attractive_paths, activation_costs, air
         initial_kernel = active_airports
         iterations = 1
 
+    kernel = initial_kernel
+    best_obj_val = 0
     for iteration in range(iterations):
         for bucket_id, bucket in buckets.items():
             m = gp.Model("EACN_REG")
             m.setParam('LogToConsole', 0)
-            airports = initial_kernel + bucket
-            graph = remove_nodes_from_graph(graph=airports_graph_below_tau, nodes_to_keep=airports,
-                                            print_action=True)
-            paths = [path for path in attractive_paths if all(node in airports for node in path)]
-            paths = np.array(paths, dtype=object)
+            airports = kernel + bucket
+            graph = remove_nodes_from_graph(graph=airports_graph_below_tau, nodes_to_keep=airports, print_action=True)
+            paths = np.array([path for path in attractive_paths if all(node in airports for node in path)],
+                             dtype=object)
 
             m1_vals, m2_vals, m3_vals = calculate_tight_big_m(active_graph=graph,
                                                               tau=settings.aircraft_config.tau,
@@ -56,6 +57,7 @@ def solve_eacn_model(population_density, attractive_paths, activation_costs, air
             if ks:
                 objective_func = settings.model_config.mu_1 * population_covered - settings.model_config.mu_2 * installation_cost
                 m.setObjective(objective_func, GRB.MAXIMIZE)
+                m.addConstr(objective_func >= best_obj_val)
             elif settings.model_config.lexicographic:
                 m.setObjectiveN(population_covered, index=0, priority=2, weight=-1)
                 m.setObjectiveN(installation_cost, index=1, priority=1, weight=1)
@@ -84,7 +86,7 @@ def solve_eacn_model(population_density, attractive_paths, activation_costs, air
             for airport_i, airport_j in canonical_edges:
                 m.addConstr(graph.edges[airport_i, airport_j]['weight'] + rho[airport_i] + rho[airport_j] <=
                             settings.aircraft_config.tau + m3_vals[airport_i, airport_j] * (
-                                        1 - z[airport_i, airport_j]))  # 4
+                                    1 - z[airport_i, airport_j]))  # 4
                 m.addConstr(z[airport_i, airport_j] <= 1 - chi[airport_i])  # 21
                 m.addConstr(z[airport_i, airport_j] <= 1 - chi[airport_j])  # 22
                 m4_ij = settings.aircraft_config.tau - graph.edges[airport_i, airport_j]['weight']
@@ -109,6 +111,10 @@ def solve_eacn_model(population_density, attractive_paths, activation_costs, air
 
             m.setParam('TimeLimit', 5000)
             m.optimize()
-            m.write("EACN_REG_model.lp")
-
+            #m.write("EACN_REG_model.lp")
+            if m.Status in (GRB.OPTIMAL,) and m.SolCount > 0:
+                charging_airports, active_path_indices, solutions = get_outputs_from_model(m)
+                kernel = kernel + [charging_airports for charging_airport in charging_airports
+                                   if charging_airport not in kernel]
+                best_obj_val = solutions[0][0]
     return m
