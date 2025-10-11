@@ -9,7 +9,7 @@ from utils.init_dataset import (cells_generation, nodes_generation, get_populati
                                 get_destination_cells2destination_airports, get_activation_cost_airports,
                                 get_closest_airport_from_destination_cell)
 from utils.preprocessing import (create_threshold_graph, get_attractive_paths, get_all_paths_to_destinations,
-                                 get_population_cells_paths, get_active_airports)
+                                 get_population_cells_paths, create_active_graph)
 from model.utils_model import get_outputs_from_model
 from utils.plot import plot_dataset
 from model.eanc_reg_model import solve_eacn_model
@@ -59,7 +59,6 @@ if settings.model_config.closest_airport_to_destination_cell:
                             for destination_airport in airports]
     _logger.info("For destination cells {}, the selected destination airports is: {}".
                  format(settings.population_config.destination_cells[0], destination_airports))
-
 else:
     destination_cells2destination_airports = get_destination_cells2destination_airports(
         destination_cells=settings.population_config.destination_cells,
@@ -69,11 +68,9 @@ else:
                             for destination_airport in airports]
     _logger.info("For destination cells {}, the selected destination airports is/are: {}".
                  format(settings.population_config.destination_cells, destination_airports))
-
 if len(destination_airports) == 0:
     _logger.error("Empty destination airports list.")
     sys.exit()
-
 destination_airports = np.array(destination_airports)
 
 _logger.info("------------- Pre-Processing --------------")
@@ -90,17 +87,16 @@ all_paths = get_all_paths_to_destinations(graph=airports_graph_below_tau,
 attractive_paths = get_attractive_paths(paths=all_paths,
                                         distances=airports_distances,
                                         routing_factor_thr=settings.paths_config.routing_factor_thr)
-active_airports = get_active_airports(attractive_paths=attractive_paths)
-
+active_graph = create_active_graph(distances=airports_distances,attractive_paths=attractive_paths)
 population_cells_paths = get_population_cells_paths(population_coords=population_coords,
                                                     paths=attractive_paths,
                                                     population_cells_near_airports=population_cells_near_airports)
 
 _logger.info("-------------- MILP Optimization --------------")
 m = solve_eacn_model(population_density=population_density, attractive_paths=attractive_paths,
-                     activation_costs=activation_costs, airports_graph_below_tau = airports_graph_below_tau,
-                     active_airports=active_airports, population_cells_paths=population_cells_paths,
-                     destination_cells2destination_airports=destination_cells2destination_airports, ks=False)
+                     activation_costs=activation_costs, active_graph=active_graph,
+                     population_cells_paths=population_cells_paths,
+                     destination_cells2destination_airports=destination_cells2destination_airports, ks=True)
 charging_airports = []
 active_path_indices = []
 if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:

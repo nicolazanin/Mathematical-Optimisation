@@ -7,7 +7,7 @@ population_config:
   destination_cells: [ 9, 3 ]
 
 airports_config:
-  num: 20 # 7 is interesting
+  num: 50
   min_distance: 30 # km
   min_cost: 1
   max_cost: 1
@@ -25,22 +25,22 @@ paths_config:
   routing_factor_thr: 1.4 # ratio between the path’s total flight distance and the nonstop flight distance
 
 model_config:
-  epsilon: 10
+  epsilon: 30
   mu_1: 1
-  mu_2: 0.01
+  mu_2: 1
   closest_airport_to_destination_cell: True # if True the destination airport will be the closest one to the first
                                             # destination cell. Otherwise, given a set of destination cells the
                                             # destination airports will be the ones within a specified maximum ground
                                             # distance from the destination cell
-  lexicographic: False
+  lexicographic: True
 
 heuristic_config:
   initial_kernel_size: 5
   bucket_size: 10
-  iterations: 1
+  iterations: 2
   max_run_time: 8500
 
-random_seed: 2
+random_seed: 5
 logging_lvl: 20 # 10: debug; 20: info
 print_logs: False
-plot: True
+plot: False
