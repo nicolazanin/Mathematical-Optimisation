@@ -3,14 +3,14 @@ population_config:
   cells_y: 10   # as well as the area of a single cell.
   cell_area: 4500 # total area of 450,000 square kilometers
   min_density: 1
-  max_density: 1
-  destination_cells: [ 9, 3 ]
+  max_density: 5000
+  destination_cells: [14]
 
 airports_config:
-  num: 50
+  num: 40
   min_distance: 30 # km
   min_cost: 1
-  max_cost: 1
+  max_cost: 10
 
 aircraft_config:
   tau: 400 # single charge range
@@ -27,19 +27,21 @@ paths_config:
 model_config:
   epsilon: 30
   mu_1: 1
-  mu_2: 1
+  mu_2: 0.01
   closest_airport_to_destination_cell: True # if True the destination airport will be the closest one to the first
                                             # destination cell. Otherwise, given a set of destination cells the
                                             # destination airports will be the ones within a specified maximum ground
                                             # distance from the destination cell
   lexicographic: True
+  mip_gap: 0.000
 
 heuristic_config:
   initial_kernel_size: 5
   bucket_size: 10
-  iterations: 2
+  iterations: 3
   max_run_time: 8500
 
+kernel_search: False
 random_seed: 5
 logging_lvl: 20 # 10: debug; 20: info
 print_logs: False

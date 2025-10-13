@@ -9,6 +9,7 @@ from utils.settings import settings
 def model(airports, paths, graph, population_cells_paths, destination_cells2destination_airports):
     m = gp.Model("aa")
     m.setParam('LogToConsole', 0)
+    m.setParam('MIPGap', settings.model_config.mip_gap)
     m1_vals, m2_vals, m3_vals = calculate_tight_big_m(active_graph=graph,
                                                       tau=settings.aircraft_config.tau,
                                                       epsilon=settings.model_config.epsilon)
@@ -160,9 +161,10 @@ def get_buckets(airports, kernel, bucket_size) -> dict:
 
 
 def get_outputs_from_model(m):
-    y_vars, psi_vars, _ = get_y_psi_phi_variables(m)
+    y_vars, psi_vars, phi_vars = get_y_psi_phi_variables(m)
 
     charging_airports = [int(v.VarName[2:-1]) for v in y_vars if v.X == 1]
+    population_covered = [eval(v.VarName[4:-1])[0] +eval(v.VarName[4:-1])[1] for v in phi_vars if v.X > 0.99]
     active_path_indices = np.array([int(v.VarName[4:-1]) for v in psi_vars if v.X == 1])
 
     nObjectives = m.NumObj
@@ -177,7 +179,7 @@ def get_outputs_from_model(m):
         else:
             solutions[s].append(m.ObjVal)
 
-    return charging_airports, active_path_indices, solutions
+    return charging_airports, population_covered, active_path_indices, solutions
 
 def get_y_psi_phi_variables(m):
     all_vars = m.getVars()

@@ -51,6 +51,7 @@ class ModelConfig:
     mu_2: float
     closest_airport_to_destination_cell: bool
     lexicographic: bool
+    mip_gap: float
 
 @dataclass
 class HeuristicConfig:
@@ -85,6 +86,7 @@ class Settings:
     paths_config: PathsConfig
     model_config: ModelConfig
     heuristic_config: HeuristicConfig
+    kernel_search: bool
     random_seed: int
     logging_lvl: int
     print_logs: bool

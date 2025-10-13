@@ -93,20 +93,20 @@ population_cells_paths = get_population_cells_paths(population_coords=population
                                                     population_cells_near_airports=population_cells_near_airports)
 
 _logger.info("-------------- MILP Optimization --------------")
-m = solve_eacn_model(population_density=population_density, attractive_paths=attractive_paths,
+m, time = solve_eacn_model(population_density=population_density, attractive_paths=attractive_paths,
                      activation_costs=activation_costs, active_graph=active_graph,
                      population_cells_paths=population_cells_paths,
                      destination_cells2destination_airports=destination_cells2destination_airports, ks=True)
 charging_airports = []
 active_path_indices = []
 if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
-    charging_airports, active_path_indices, solutions = get_outputs_from_model(m)
+    charging_airports, population_covered, active_path_indices, solutions = get_outputs_from_model(m)
     _logger.info("Charging airports: {}".format(str(charging_airports)))
     _logger.info("Active paths: {}".format(str(active_path_indices)))
     for sol in solutions:
         _logger.info("Solutions {}: {} ".format(sol, solutions[sol]))
 else:
-    _logger.info("No feasible solution was found. Status:", m.Status)
+    _logger.info("No feasible solution was found. Status:".format(m.Status))
 
 if not settings.plot:
     _logger.info("Plot skipped")
