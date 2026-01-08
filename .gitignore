@@ -16,3 +16,4 @@ venv/
 
 #gurobi model
 *.lp
+*.html

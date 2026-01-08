@@ -4,10 +4,11 @@ population_config:
   cell_area: 4500 # total area of 450,000 square kilometers
   min_density: 1
   max_density: 5000
-  destination_cells: [14]
+  high_population_cells: [20, 55]
+  destination_cells: [55]
 
 airports_config:
-  num: 40
+  num: 10
   min_distance: 30 # km
   min_cost: 1
   max_cost: 10
@@ -36,13 +37,13 @@ model_config:
   mip_gap: 0.000
 
 heuristic_config:
+  enable: False
   initial_kernel_size: 5
   bucket_size: 10
   iterations: 3
-  max_run_time: 8500
+  max_run_time: 5
 
-kernel_search: False
 random_seed: 5
 logging_lvl: 20 # 10: debug; 20: info
 print_logs: False
-plot: False
+plot: True

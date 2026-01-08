@@ -95,6 +95,29 @@ def cells_generation(num_cells_x: int, num_cells_y: int, cell_area: float) -> np
 
     return np.array(cells_coords)
 
+def get_pop_density(population_coords: np.ndarray, high_population_cells: list, min_density: int = 0,
+                    max_density: int = 5000) -> np.ndarray:
+    """
+    Generates random population density values for a list of population grid cell coordinates.
+
+    Args:
+        population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
+        of population cell centers.
+        high_population_cells (list): An array of destination cell indices where we want to simulate high population
+        density.
+        min_density (int, optional): Minimum population density value.
+        max_density (int, optional): Maximum population density value.
+
+    Returns:
+        np.ndarray: A NumPy array of population density values (integers) with the same length as `population_coords`.
+    """
+    _logger.info("Generated random population density for each population grid cell")
+    if min_density == max_density:
+        return np.array([min_density for _ in range(len(population_coords))])
+    else:
+        population_density = np.random.randint(min_density, max_density / 10, size=len(population_coords))
+        population_density[high_population_cells] = max_density
+        return population_density
 
 def grid_dimensions(num_cells_x: int, num_cells_y: int, cell_area: float) -> tuple:
     """
@@ -166,24 +189,7 @@ def get_closest_airport_from_destination_cell(airports_coords: np.ndarray,
     return int(np.argmin(np.linalg.norm(population_coords[destination_cell] - airports_coords, axis=1)))
 
 
-def get_pop_density(population_coords: np.ndarray, min_density: int = 0, max_density: int = 50000) -> np.ndarray:
-    """
-    Generates random population density values for a list of population grid cell coordinates.
 
-    Args:
-        population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
-        of population cell centers.
-        min_density (int, optional): Minimum population density value.
-        max_density (int, optional): Maximum population density value.
-
-    Returns:
-        np.ndarray: A NumPy array of population density values (integers) with the same length as `population_coords`.
-    """
-    _logger.info("Generated random population density for each population grid cell")
-    if min_density == max_density:
-        return np.array([min_density for _ in range(len(population_coords))])
-    else:
-        return np.random.randint(min_density, max_density, size=len(population_coords))
 
 
 def get_destination_cells2destination_airports(destination_cells: list, population_cells_near_airports: dict) -> dict:

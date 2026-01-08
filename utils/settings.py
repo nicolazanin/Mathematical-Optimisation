@@ -16,6 +16,7 @@ class PopulationConfig:
     cell_area: int
     min_density: int
     max_density: int
+    high_population_cells: list
     destination_cells: list
 
 
@@ -55,6 +56,7 @@ class ModelConfig:
 
 @dataclass
 class HeuristicConfig:
+    enable: bool
     initial_kernel_size: int
     bucket_size: int
     iterations: int
@@ -86,7 +88,6 @@ class Settings:
     paths_config: PathsConfig
     model_config: ModelConfig
     heuristic_config: HeuristicConfig
-    kernel_search: bool
     random_seed: int
     logging_lvl: int
     print_logs: bool
