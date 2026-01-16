@@ -31,51 +31,6 @@ def create_threshold_graph(distances: dict, tau: float, mode: str = "below") -> 
     return graph
 
 
-def get_attractive_paths(paths: np.ndarray, distances: dict, routing_factor_thr: float) -> np.ndarray:
-    """
-    Removes paths that are considered unattractive based on the routing factor threshold.
-
-    A path is considered unattractive if the ratio between the path’s total distance and the nonstop distance between
-    the origin and destination node exceeds the given `routing_factor_thr`. Only paths with routing factor less than or
-    equal to the threshold are returned.
-
-    Args:
-        paths (list): A NumPy array of all simple paths (each path is a list of node IDs).
-        distances (dict): A dictionary where each key is a tuple (i, j) representing a pair of nodes indices, and the
-        value is the Euclidean distance between node i and node j.
-        routing_factor_thr (float): Ratio between the path’s total distance and the nonstop distance
-
-    Returns:
-         np.ndarray: A NumPy array of attractive paths (each path is a list of node IDs).
-    """
-    attractive_paths = []
-    for path in paths:
-        total_distance = 0.0
-        for i in range(len(path) - 1):
-            if path[i] < path[i + 1]:
-                node_pair = (path[i], path[i + 1])
-            else:
-                node_pair = (path[i + 1], path[i])
-
-            total_distance += distances[node_pair]
-        if path[0] < path[-1]:
-            direct_pair = (path[0], path[-1])
-        else:
-            direct_pair = (path[-1], path[0])
-
-        direct_distance = distances[direct_pair]
-
-        routing_factor = total_distance / direct_distance
-
-        if routing_factor <= routing_factor_thr:
-            attractive_paths.append(path)
-
-    _logger.info("Removed {} unattractive paths based on the routing factor threshold (routing_factor_thr={})".format(
-        len(paths) - len(attractive_paths), routing_factor_thr))
-
-    return np.array(attractive_paths, dtype=object)
-
-
 def get_all_paths_to_destinations(graph: nx.Graph, destination_airports: np.ndarray,
                                   max_path_edges: int) -> np.ndarray:
     """
@@ -101,6 +56,44 @@ def get_all_paths_to_destinations(graph: nx.Graph, destination_airports: np.ndar
                                                                                destination_airports))
 
     return np.array(all_paths, dtype=object)
+
+
+def get_attractive_paths(paths: np.ndarray, distances: dict, routing_factor_thr: float) -> np.ndarray:
+    """
+    Removes paths that are considered unattractive based on the routing factor threshold.
+
+    A path is considered unattractive if the ratio between the path’s total distance and the nonstop distance between
+    the origin and destination node exceeds the given `routing_factor_thr`. Only paths with routing factor less than or
+    equal to the threshold are returned.
+
+    Args:
+        paths (list): A NumPy array of all simple paths (each path is a list of node IDs).
+        distances (dict): A dictionary where each key is a tuple (i, j) representing a pair of nodes indices, and the
+        value is the Euclidean distance between node i and node j.
+        routing_factor_thr (float): Ratio between the path’s total distance and the nonstop distance
+
+    Returns:
+         np.ndarray: A NumPy array of attractive paths (each path is a list of node IDs).
+    """
+    attractive_paths = []
+    for path in paths:
+        total_distance = 0.0
+        for i in range(len(path) - 1):
+            node_pair = tuple(sorted((path[i], path[i + 1])))
+            total_distance += distances[node_pair]
+
+        direct_pair = tuple(sorted((path[0], path[-1])))
+        direct_distance = distances[direct_pair]
+
+        routing_factor = total_distance / direct_distance
+
+        if routing_factor <= routing_factor_thr:
+            attractive_paths.append(path)
+
+    _logger.info("Removed {} unattractive paths based on the routing factor threshold (routing_factor_thr={})".format(
+        len(paths) - len(attractive_paths), routing_factor_thr))
+
+    return np.array(attractive_paths, dtype=object)
 
 
 def get_population_cells_paths(population_coords, paths: np.ndarray,
@@ -140,17 +133,9 @@ def create_active_graph(distances, attractive_paths):
                 d = distances[path[i], path[i + 1]]
             else:
                 d = distances[path[i + 1], path[i]]
-            active_graph.add_edge(path[i], path[i+1], weight=d)
+            active_graph.add_edge(path[i], path[i + 1], weight=d)
     _logger.info(
         "Created active graph with {} edges and {} nodes".format(len(active_graph.edges), len(active_graph.nodes)))
 
     return active_graph
 
-def remove_nodes_from_graph(graph, nodes_to_keep, print_action=False):
-    nodes_to_remove = [node for node in graph.nodes() if node not in nodes_to_keep]
-    active_graph = graph.copy()
-    active_graph.remove_nodes_from(nodes_to_remove)
-    if print_action:
-        _logger.info("Created active graph with {} edges and {} nodes".format(len(graph.edges), len(graph.nodes)))
-
-    return active_graph

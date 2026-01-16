@@ -6,7 +6,7 @@ from collections import defaultdict
 from utils.settings import settings
 
 
-def model(airports, paths, graph, population_cells_paths, destination_cells2destination_airports):
+def model(airports, paths, graph, population_cells_paths, destination_cells, destination_airports):
     m = gp.Model("aa")
     m.setParam('LogToConsole', 0)
     m.setParam('MIPGap', settings.model_config.mip_gap)
@@ -25,7 +25,7 @@ def model(airports, paths, graph, population_cells_paths, destination_cells2dest
 
     psi = m.addVars(len(paths), vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="psi")
     phi = m.addVars([(i, j) for i in range(len(population_cells_paths)) for j in
-                     range(len(destination_cells2destination_airports.keys()))], vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0,
+                     range(len(destination_cells))], vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0,
                     name="phi")
     for airport in airports:
         neighbors = list(graph.neighbors(airport))
@@ -62,10 +62,9 @@ def model(airports, paths, graph, population_cells_paths, destination_cells2dest
             m.addConstr(psi[id] <= z[edge])  # 5
 
     for id in range(len(population_cells_paths)):
-        for destination_id, destination in enumerate(destination_cells2destination_airports):
+        for destination_id, destination in enumerate(destination_cells):
             path_indices = [i for i, p in enumerate(paths) if
-                            p in population_cells_paths[id] and p[-1] in destination_cells2destination_airports[
-                                destination]]
+                            p in population_cells_paths[id] and p[-1] in destination_airports] # TODO : check if correct
             if path_indices:
                 m.addConstr(phi[id, destination_id] <= gp.quicksum(psi[p_id] for p_id in path_indices))
             else:

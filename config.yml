@@ -5,7 +5,7 @@ population_config:
   min_density: 1
   max_density: 5000
   high_population_cells: [20, 55]
-  destination_cells: [55]
+  destination_cells: [55, 70]
 
 airports_config:
   num: 10
@@ -29,10 +29,6 @@ model_config:
   epsilon: 30
   mu_1: 1
   mu_2: 0.01
-  closest_airport_to_destination_cell: True # if True the destination airport will be the closest one to the first
-                                            # destination cell. Otherwise, given a set of destination cells the
-                                            # destination airports will be the ones within a specified maximum ground
-                                            # distance from the destination cell
   lexicographic: True
   mip_gap: 0.000
 

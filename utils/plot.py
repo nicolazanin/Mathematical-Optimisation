@@ -580,8 +580,7 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
                  airport_distances: dict, graph_below_tau: nx.Graph, graph_above_tau: nx.Graph,
                  destination_airports: np.ndarray, destination_cells: list, max_ground_distance: float,
                  all_paths: np.ndarray, attractive_paths: np.ndarray, population_cells_near_airports: dict,
-                 charging_airports: list, active_path_indices: np.ndarray,
-                 closest_airport_to_destination_cell: bool) -> None:
+                 charging_airports: list, active_path_indices: np.ndarray,) -> None:
     """
     Main function to plot the full dataset.
 
@@ -605,7 +604,6 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
         of indices of population cells located within the specified distance from that airport.
         charging_airports (list): A list of airports indices representing the bases.
         active_path_indices (np.ndarray): A NumPy array of active paths indices.
-        closest_airport_to_destination_cell (bool): If True, the destination airport is chosen based on the minimum
         distance from the first destination cell and not on the maximum ground distance (no need to plot max ground
         distance from destination cells)
 
