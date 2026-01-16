@@ -4,11 +4,11 @@ population_config:
   cell_area: 4500 # total area of 450,000 square kilometers
   min_density: 1
   max_density: 5000
-  high_population_cells: [20, 55]
-  destination_cells: [55, 70]
+  high_population_cells: [81, 26]
+  destination_cells: [81, 88]
 
 airports_config:
-  num: 10
+  num: 15
   min_distance: 30 # km
   min_cost: 1
   max_cost: 10
@@ -24,6 +24,10 @@ ground_access_config:
 paths_config:
   max_edges: 3 # maximum of 3 adjacent edges (maximum of 2 intermediate airports)
   routing_factor_thr: 1.4 # ratio between the path’s total flight distance and the nonstop flight distance
+  max_total_time_travel: 4 # this is the max total travel time threshold (ground access component + flight time)
+  min_ground_travel_time_to_destination_cell: 2   # this is the minimum ground transportation travel time form any
+                                                  # population cell to a destination cell to consider the paths starting
+                                                  # form that population cell as attractive
 
 model_config:
   epsilon: 30
@@ -39,7 +43,7 @@ heuristic_config:
   iterations: 3
   max_run_time: 5
 
-random_seed: 5
-logging_lvl: 20 # 10: debug; 20: info
+random_seed: 55
+logging_lvl: 10 # 10: debug; 20: info
 print_logs: False
 plot: True

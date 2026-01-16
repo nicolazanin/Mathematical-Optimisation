@@ -44,6 +44,8 @@ class GroundAccessConfig:
 class PathsConfig:
     max_edges: int
     routing_factor_thr: float
+    max_total_time_travel: float
+    min_ground_travel_time_to_destination_cell: float
 
 @dataclass
 class ModelConfig:
@@ -138,7 +140,7 @@ def setup_logging(log_prefix: str, print_file: bool = True) -> None:
         file_formatter.converter = time.gmtime
 
         root = logging.getLogger()
-        root.setLevel(logging.INFO)
+        root.setLevel(settings.logging_lvl)
 
         if len(root.handlers) != 0:
             console_handler = root.handlers[0]
@@ -147,10 +149,10 @@ def setup_logging(log_prefix: str, print_file: bool = True) -> None:
 
         file_handler = logging.FileHandler(_log_file_name, mode='a', delay=True)
 
-        console_handler.setLevel(logging.DEBUG)
+        console_handler.setLevel(settings.logging_lvl)
         console_handler.setFormatter(console_formatter)
 
-        file_handler.setLevel(logging.DEBUG)
+        file_handler.setLevel(settings.logging_lvl)
         file_handler.setFormatter(file_formatter)
 
         root.addHandler(console_handler)

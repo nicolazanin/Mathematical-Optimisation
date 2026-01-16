@@ -191,7 +191,7 @@ def get_population_cells_near_airports(airports_coords: np.ndarray,
 
 
 def get_population_cells2airports_distances(population_coords: np.ndarray,
-                                                     airports_coords: np.ndarray) -> np.ndarray:
+                                            airports_coords: np.ndarray) -> np.ndarray:
     """
     Computes the Euclidean distances between each population cell and each airport.
 
@@ -209,8 +209,8 @@ def get_population_cells2airports_distances(population_coords: np.ndarray,
     return np.linalg.norm(diff, axis=2)
 
 
-def get_reachable_airports_from_destination_cells(destination_cells: list, population_airport_distances: np.ndarray,
-                                    max_ground_distance: float) -> list:
+def get_destinations_airports_info(destination_cells: list, population_airport_distances: np.ndarray,
+                                                     max_ground_distance: float) -> list:
     """
     For each destination cell, finds the closest airport and keeps it if within max_distance.
 
@@ -220,10 +220,9 @@ def get_reachable_airports_from_destination_cells(destination_cells: list, popul
         max_ground_distance (float): Maximum allowed ground distance to consider a population cell "near" an airport.
 
     Returns:
-        list: Each tuple in the list contains: (population_cell_idx, closest_airport_idx, distance)
+        list: Each tuple in the list contains: (destination_cell_idx, closest_airport_idx, distance)
     """
     results = []
-
     for cell_idx in destination_cells:
         distances = population_airport_distances[cell_idx]
 
@@ -232,7 +231,11 @@ def get_reachable_airports_from_destination_cells(destination_cells: list, popul
 
         if closest_distance <= max_ground_distance:
             results.append((cell_idx, closest_airport_idx, closest_distance))
-        _logger.info("For destination cell {}, the selected destination airports is: {}".
-                     format(cell_idx, closest_airport_idx))
+            _logger.info("For destination cell {}, the selected destination airports is: {} (closest one within the max"
+                         " ground distance)". format(cell_idx, closest_airport_idx))
+        else:
+            _logger.info(
+                "For destination cell {} there are no destination airports within the max ground distance".format(
+                cell_idx))
 
     return results
