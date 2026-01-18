@@ -62,9 +62,7 @@ destinations_airports_info = get_destinations_airports_info(
     population_airport_distances=population_cells2airport_distances, max_ground_distance=max_ground_distance)
 destination_airports = np.array([destination_airport_prop[1] for destination_airport_prop in
                                  destinations_airports_info])
-if len(destination_airports) == 0:
-    _logger.error("Empty destination airports list.")
-    sys.exit()
+
 
 _logger.info("------------- Pre-Processing --------------")
 # Create two graph to identify the edges above and below the distance threshold tau (single charge range)

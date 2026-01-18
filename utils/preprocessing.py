@@ -165,11 +165,12 @@ def get_population_cells_paths(population_coords, paths: np.ndarray, distances: 
                     population_cells_paths[pop].append(simple_path)
                 else:
                     _logger.debug("The path {} can not be used by population cell {} due to "
-                                  "the limit on the total time of travel of {} hours".format(
+                                  "the limit on the 'max_total_time_travel' of {} hours".format(
                         simple_path, pop, max_total_time))
             else:
                 _logger.debug("The path {} can not be used by population cell {} because the area is too close to the "
-                              "destination cell {}".format(simple_path, pop, dest_cell))
+                              "destination cell {} (based on 'min_ground_travel_time_to_destination_cell' and"
+                              " ground 'avg_speed')".format(simple_path, pop, dest_cell))
 
     return population_cells_paths
 

@@ -354,8 +354,8 @@ def get_destination_airports(airports_coords: np.ndarray, destination_airports: 
     labels = np.array([[str(num) for num in range(len(destination_airports))],
                        [str(num) for num in destination_airports]]).T
     destination_airport_markers = go.Scatter(
-        x=airports_coords[destination_airports, 0],
-        y=airports_coords[destination_airports, 1],
+        x=airports_coords[list(destination_airports), 0],
+        y=airports_coords[list(destination_airports), 1],
         mode='markers',
         marker=dict(
             color='rgb(250, 97, 255)',
@@ -649,14 +649,15 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
 
     path_origins_population_cells = get_paths_origins_population_cells(population_coords=population_coords,
                                                                        population_cells_paths=population_cells_paths)
-    new_legend_group = path_origins_population_cells[0].legendgroup
-    new_path_index = 0
-    for i, path in enumerate(path_origins_population_cells):
-        if new_legend_group != path.legendgroup:
-            new_path_index += 1
-            new_legend_group = path.legendgroup
-        if new_path_index in active_path_indices:
-            active.append(len(fig.data) + i)
+    if len(path_origins_population_cells) is not 0:
+        new_legend_group = path_origins_population_cells[0].legendgroup
+        new_path_index = 0
+        for i, path in enumerate(path_origins_population_cells):
+            if new_legend_group != path.legendgroup:
+                new_path_index += 1
+                new_legend_group = path.legendgroup
+            if new_path_index in active_path_indices:
+                active.append(len(fig.data) + i)
     fig.add_traces(path_origins_population_cells)
 
     ground_dist_paths_origins_airports = get_ground_dist_paths_origins_airports(airports_coords=airports_coords,

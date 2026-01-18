@@ -4,15 +4,15 @@ population_config:
   cell_area: 4500 # total area of 450,000 square kilometers
   min_density: 1
   max_density: 5000
-  high_population_cells: [81, 29]
-  destination_cells: [81]
+  high_population_cells: [78, 22, 71]
+  destination_cells: [22]
 
 airports_config:
-  num: 12
+  num: 15
   min_distance: 30 # km
   min_cost: 1
   max_cost: 10
-  additional_airport_coords: [[538, 662]]
+  additional_airport_coords: [[240, 420], [160,579], [120, 569]]
 
 aircraft_config:
   tau: 400 # single charge range
@@ -44,7 +44,7 @@ heuristic_config:
   iterations: 3
   max_run_time: 5
 
-random_seed: 55
+random_seed: 559
 logging_lvl: 10 # 10: debug; 20: info
 print_logs: False
 plot: True

@@ -112,8 +112,10 @@ def nodes_generation(num_nodes: int, total_width: int, total_height: int, additi
         coords.append(additional_node)
     coords = np.array(coords)
 
-    _logger.info("Created {} nodes within an area of {:.1f}km x {:.1f}km with a minimum distance between nodes of "
-                 "{:.0f}km".format(num_nodes, total_width, total_height, min_distance_km))
+    _logger.info("Created {} nodes within an area of {:.1f}km x {:.1f}km with a 'min_distance' between nodes of "
+                 "{:.0f}km, added {} nodes based on manual settings".format(num_nodes, total_width,
+                                                                                        total_height, min_distance_km,
+                                                                                        len(additional_nodes)))
 
     return coords
 
@@ -154,7 +156,7 @@ def get_nodes_distances(nodes_coords: np.ndarray) -> dict:
         for j in range(i + 1, num_nodes):
             dist = np.linalg.norm(nodes_coords[i] - nodes_coords[j])
             distances[(i, j)] = dist
-    _logger.info("Calculated pairwise Euclidean distances between {} nodes".format(len(distances)))
+    _logger.info("Calculated {} pairwise Euclidean distances between {} nodes".format(len(distances), num_nodes))
 
     return distances
 
@@ -183,8 +185,8 @@ def get_population_cells_near_airports(airports_coords: np.ndarray, population_c
         near_cells = np.where(distances < max_ground_distance)[0].tolist()
         population_cells_near_airports[airport_idx] = near_cells
 
-    _logger.info("Identified all the population cells within a maximum ground distance of {}km from each airport".
-                 format(max_ground_distance))
+    _logger.info("Identified all the population cells within a maximum ground distance of {}km from each airport (based "
+                 "on 'ground_access_config')".format(max_ground_distance))
 
     return population_cells_near_airports
 
@@ -208,7 +210,7 @@ def get_population_cells2airports_distances(population_coords: np.ndarray, airpo
 
 
 def get_destinations_airports_info(destination_cells: list, population_airport_distances: np.ndarray,
-                                                     max_ground_distance: float) -> list:
+                                   max_ground_distance: float) -> list:
     """
     For each destination cell, finds the closest airport and keeps it if within max_distance.
 
@@ -229,11 +231,11 @@ def get_destinations_airports_info(destination_cells: list, population_airport_d
 
         if closest_distance <= max_ground_distance:
             results.append((cell_idx, closest_airport_idx, closest_distance))
-            _logger.info("For destination cell {}, the selected destination airports is: {} (closest one within the max"
-                         " ground distance)". format(cell_idx, closest_airport_idx))
+            _logger.info("For destination cell {}, the selected destination airports is: {} (closest one within the "
+                         "maximum ground distance)".format(cell_idx, closest_airport_idx))
         else:
             _logger.info(
                 "For destination cell {} there are no destination airports within the max ground distance".format(
-                cell_idx))
+                    cell_idx))
 
     return results
