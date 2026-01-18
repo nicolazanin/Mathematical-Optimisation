@@ -76,11 +76,8 @@ def get_grid_dimensions(num_cells_x: int, num_cells_y: int, cell_area: float) ->
     return total_width, total_height
 
 
-def nodes_generation(num_nodes: int,
-                     total_width: int,
-                     total_height: int,
-                     min_distance_km: int = 30,
-                     max_attempts: int = 100) -> np.ndarray:
+def nodes_generation(num_nodes: int, total_width: int, total_height: int, additional_nodes: list,
+                     min_distance_km: int = 30, max_attempts: int = 100) -> np.ndarray:
     """
     Generates a set of 2D nodes within a defined area, ensuring a minimum distance between any two nodes.
 
@@ -88,6 +85,7 @@ def nodes_generation(num_nodes: int,
         num_nodes (int): Number of nodes to generate.
         total_width (float): Width of the area.
         total_height (float): Height of the area.
+        additional_nodes (list): A list of nodes coordinates to add to the set.
         min_distance_km (float): Minimum allowed distance between any two nodes (same units as width/height).
         max_attempts (int): Maximum number of attempts per node to find a valid location.
 
@@ -110,8 +108,10 @@ def nodes_generation(num_nodes: int,
     if len(coords) < num_nodes:
         raise ValueError("Could not place all nodes with given constraints. "
                          "Try reducing 'num_nodes' or 'min_distance_km'.")
-
+    for additional_node in additional_nodes:
+        coords.append(additional_node)
     coords = np.array(coords)
+
     _logger.info("Created {} nodes within an area of {:.1f}km x {:.1f}km with a minimum distance between nodes of "
                  "{:.0f}km".format(num_nodes, total_width, total_height, min_distance_km))
 
@@ -159,8 +159,7 @@ def get_nodes_distances(nodes_coords: np.ndarray) -> dict:
     return distances
 
 
-def get_population_cells_near_airports(airports_coords: np.ndarray,
-                                       population_coords: np.ndarray,
+def get_population_cells_near_airports(airports_coords: np.ndarray, population_coords: np.ndarray,
                                        max_ground_distance: float) -> dict:
     """
     Identifies population cells that are within a specified maximum ground distance from each airport.
@@ -190,8 +189,7 @@ def get_population_cells_near_airports(airports_coords: np.ndarray,
     return population_cells_near_airports
 
 
-def get_population_cells2airports_distances(population_coords: np.ndarray,
-                                            airports_coords: np.ndarray) -> np.ndarray:
+def get_population_cells2airports_distances(population_coords: np.ndarray, airports_coords: np.ndarray) -> np.ndarray:
     """
     Computes the Euclidean distances between each population cell and each airport.
 

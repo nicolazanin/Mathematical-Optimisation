@@ -11,7 +11,7 @@ from utils.init_dataset import (cells_generation, nodes_generation, get_populati
                                 get_population_cells2airports_distances)
 from utils.preprocessing import (get_threshold_graph, get_attractive_paths_from_rft, get_all_paths_to_destinations,
                                  get_population_cells_paths, get_population_cells_too_close_to_destination_cells,
-                                 get_attractive_paths)
+                                 get_attractive_paths, get_attractive_graph)
 from model.utils_model import get_outputs_from_model
 from utils.plot import plot_dataset
 from model.eanc_reg_model import solve_eacn_model
@@ -41,8 +41,9 @@ total_width_pop_area, total_height_pop_area = get_grid_dimensions(num_cells_x=se
 airports_coords = nodes_generation(num_nodes=settings.airports_config.num,
                                    total_width=total_width_pop_area,
                                    total_height=total_height_pop_area,
+                                   additional_nodes=settings.airports_config.additional_airport_coords,
                                    min_distance_km=settings.airports_config.min_distance)
-activation_costs = get_activation_cost_airports(num_airports=settings.airports_config.num,
+activation_costs = get_activation_cost_airports(num_airports=np.size(airports_coords),
                                                 max_cost=settings.airports_config.max_cost,
                                                 min_cost=settings.airports_config.min_cost)
 airports_distances = get_nodes_distances(nodes_coords=airports_coords)
@@ -94,6 +95,7 @@ population_cells_paths = get_population_cells_paths(population_coords=population
                     air_speed=settings.aircraft_config.cruise_speed,
                     max_total_time=settings.paths_config.max_total_time_travel)
 attractive_paths = get_attractive_paths(population_cells_paths=population_cells_paths)
+get_attractive_graph = get_attractive_graph(distances=airports_distances,attractive_paths=attractive_paths)
 
 _logger.info("-------------- MILP Optimization --------------")
 m, time_exec, cols, rows, lb = solve_eacn_model(population_density=population_density,

@@ -212,6 +212,7 @@ def get_attractive_paths(population_cells_paths: dict) -> np.ndarray:
     Args:
         population_cells_paths (dict): A dictionary mapping each population cell index to a list of paths (each path is
         a list of node IDs) starting from an airport near that population cell.
+
     Returns:
          np.ndarray: A NumPy array of attractive paths (each path is a list of node IDs).
     """
@@ -219,3 +220,26 @@ def get_attractive_paths(population_cells_paths: dict) -> np.ndarray:
     _logger.info("Defined {} attractive paths".format(len(attractive_paths)))
 
     return np.array([list(t) for t in attractive_paths], dtype=object)
+
+
+def get_attractive_graph(distances: dict, attractive_paths: np.ndarray) -> nx.Graph:
+    """
+    Creates a single undirected graph by including edges based on the attractive paths.
+
+    Args:
+        distances (dict): A dictionary where each key is a tuple (i, j) representing a pair of nodes indices, and the
+        value is the Euclidean distance between node i and node j.
+        attractive_paths (np.ndarray): A NumPy array of attractive paths (each path is a list of node IDs).
+
+    Returns:
+        nx.Graph: A NetworkX graph containing the filtered edges from the attractive paths.
+    """
+    active_graph = nx.Graph()
+    for path in attractive_paths:
+        for i in range(len(path) - 1):
+            node_pair = tuple(sorted((path[i], path[i + 1])))
+            active_graph.add_edge(path[i], path[i + 1], weight=distances[node_pair])
+    _logger.info(
+        "Created attractive graph with {} edges and {} nodes".format(len(active_graph.edges), len(active_graph.nodes)))
+
+    return active_graph

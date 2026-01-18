@@ -26,6 +26,7 @@ class AirportsConfig:
     min_distance: int
     min_cost: int
     max_cost: int
+    additional_airport_coords: list
 
 
 @dataclass
