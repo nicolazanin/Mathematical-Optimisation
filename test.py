@@ -61,8 +61,7 @@ destinations_airports_info = get_destinations_airports_info(
     destination_cells=settings.population_config.destination_cells,
     population_airport_distances=population_cells2airport_distances, max_ground_distance=max_ground_distance)
 destination_airports = np.array([destination_airport_prop[1] for destination_airport_prop in
-                                 destinations_airports_info])
-
+                                 destinations_airports_info if destination_airport_prop[1] is not None])
 
 _logger.info("------------- Pre-Processing --------------")
 # Create two graph to identify the edges above and below the distance threshold tau (single charge range)
@@ -76,7 +75,7 @@ all_paths = get_all_paths_to_destinations(graph=airports_graph_below_tau,
                                           destination_airports=destination_airports,
                                           max_path_edges=settings.paths_config.max_edges)
 attractive_paths_from_rft = get_attractive_paths_from_rft(paths=all_paths, distances=airports_distances,
-                                        routing_factor_thr=settings.paths_config.routing_factor_thr)
+                                                          routing_factor_thr=settings.paths_config.routing_factor_thr)
 
 min_distance_to_destination_cells = (settings.ground_access_config.avg_speed *
                                      settings.paths_config.min_ground_travel_time_to_destination_cell)
@@ -84,16 +83,16 @@ population_cells_too_close_to_destination_cells = get_population_cells_too_close
     population_coords=population_coords, destination_cells=settings.population_config.destination_cells,
     min_distance=min_distance_to_destination_cells)
 population_cells_paths = get_population_cells_paths(population_coords=population_coords,
-                    paths=attractive_paths_from_rft, distances=airports_distances,
-                    population_cells_near_airports=population_cells_near_airports,
-                    destinations_airports_info=destinations_airports_info,
-                    population_cells2airport_distances=population_cells2airport_distances,
-                    population_cells_too_close_to_destination_cells = population_cells_too_close_to_destination_cells,
-                    ground_speed=settings.ground_access_config.avg_speed,
-                    air_speed=settings.aircraft_config.cruise_speed,
-                    max_total_time=settings.paths_config.max_total_time_travel)
+                                                    paths=attractive_paths_from_rft, distances=airports_distances,
+                                                    population_cells_near_airports=population_cells_near_airports,
+                                                    destinations_airports_info=destinations_airports_info,
+                                                    population_cells2airport_distances=population_cells2airport_distances,
+                                                    population_cells_too_close_to_destination_cells=population_cells_too_close_to_destination_cells,
+                                                    ground_speed=settings.ground_access_config.avg_speed,
+                                                    air_speed=settings.aircraft_config.cruise_speed,
+                                                    max_total_time=settings.paths_config.max_total_time_travel)
 attractive_paths = get_attractive_paths(population_cells_paths=population_cells_paths)
-get_attractive_graph = get_attractive_graph(distances=airports_distances,attractive_paths=attractive_paths)
+get_attractive_graph = get_attractive_graph(distances=airports_distances, attractive_paths=attractive_paths)
 
 _logger.info("-------------- MILP Optimization --------------")
 m, time_exec, cols, rows, lb = solve_eacn_model(population_density=population_density,
@@ -101,8 +100,10 @@ m, time_exec, cols, rows, lb = solve_eacn_model(population_density=population_de
                                                 activation_costs=activation_costs,
                                                 active_graph=airports_graph_below_tau,
                                                 population_cells_paths=population_cells_paths,
-                                                destination_cells=settings.population_config.destination_cells,
-                                                destination_airports=destination_airports, ks=False)
+                                                destinations_airports_info=destinations_airports_info,
+                                                tau = settings.aircraft_config.tau,
+                                                mip_gap = settings.model_config.mip_gap,
+                                                epsilon = settings.model_config.epsilon, ks=False)
 charging_airports = []
 active_path_indices = []
 if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:

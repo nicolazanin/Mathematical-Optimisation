@@ -3,57 +3,64 @@ import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
 from collections import defaultdict
-from utils.settings import settings
 
 
-def model(airports, paths, graph, population_cells_paths, destination_cells, destination_airports):
-    m = gp.Model("aa")
+def model(airports, paths, graph, population_cells_paths, destinations_airports_info, tau, mip_gap, epsilon):
+    """
+
+    Args:
+        airports :
+        paths :
+        graph :
+        population_cells_paths (dict): A dictionary mapping each population cell index to a list of paths (each path is
+        a list of node IDs) starting from an airport near that population cell.
+        destinations_airports_info (list): Each tuple in the list contains: (destination_cell_idx, closest_airport_idx,
+        distance)
+
+    Returns:
+
+    """
+    m = gp.Model("eanc")
     m.setParam('LogToConsole', 0)
-    m.setParam('MIPGap', settings.model_config.mip_gap)
-    m1_vals, m2_vals, m3_vals = calculate_tight_big_m(active_graph=graph,
-                                                      tau=settings.aircraft_config.tau,
-                                                      epsilon=settings.model_config.epsilon)
+    m.setParam('MIPGap', mip_gap)
+    m1_vals, m2_vals, m3_vals = calculate_tight_big_m(active_graph=graph, tau=tau, epsilon=epsilon)
     y = m.addVars([i for i in airports], vtype=GRB.BINARY, name="y")
     rho = m.addVars([i for i in airports], vtype=GRB.CONTINUOUS, name="rho", lb=0.0)
-    w = m.addVars([(i, j) for i in airports for j in graph.neighbors(i)],
-                  vtype=GRB.BINARY, name="w")
     chi = m.addVars([i for i in airports], vtype=GRB.BINARY, name="chi")
 
-    canonical_edges = sorted(list(set(tuple(sorted(edge)) for edge in graph.edges())))
+    canonical_edges = sorted(list(tuple(sorted(edge)) for edge in graph.edges()))
 
     z = m.addVars(canonical_edges, vtype=GRB.BINARY, name="z")
+    w = m.addVars(canonical_edges, vtype=GRB.BINARY, name="w")
+
+    dest_airports_info = {dest_cell: airport_idx for dest_cell, airport_idx, _ in destinations_airports_info}
 
     psi = m.addVars(len(paths), vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="psi")
-    phi = m.addVars([(i, j) for i in range(len(population_cells_paths)) for j in
-                     range(len(destination_cells))], vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0,
-                    name="phi")
+    phi = m.addVars([(i, j) for i in population_cells_paths.keys() for j in dest_airports_info.keys()],
+                    vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="phi")
     for airport in airports:
         neighbors = list(graph.neighbors(airport))
         m.addConstr(rho[airport] <= m1_vals[airport] * (1 - y[airport]))  # 12
-        m.addConstr(
-            y[airport] + gp.quicksum(w[(airport, neighbor)] for neighbor in neighbors) + chi[
-                airport] == 1)  # 16
+        m.addConstr(y[airport] + gp.quicksum(w[tuple(sorted((airport, neighbor)))] for neighbor in neighbors) +
+                    chi[airport] == 1)  # 16
         m.addConstr(rho[airport] >= m1_vals[airport] * chi[airport])  # 15
         for neighbor in neighbors:
             edge = tuple(sorted((airport, neighbor)))
             m.addConstr(rho[airport] <= graph.edges[airport, neighbor]['weight'] + rho[neighbor])  # 13
-            m.addConstr(
-                rho[airport] >= graph.edges[airport, neighbor]['weight'] + rho[neighbor] - m2_vals[edge] * (
-                        1 - w[(airport, neighbor)]))  # 14
+            m.addConstr(rho[airport] >= graph.edges[airport, neighbor]['weight'] + rho[neighbor] - m2_vals[edge] * (
+                    1 - w[edge]))  # 14
 
-        neighbors = list(graph.neighbors(airport))
         min_dist_to_neighbor = min(graph.edges[airport, neighbor]['weight'] for neighbor in neighbors)
         m.addConstr(rho[airport] >= min(min_dist_to_neighbor, m1_vals[airport]) * (1 - y[airport]))  # 20
 
     for airport_i, airport_j in canonical_edges:
-        m.addConstr(graph.edges[airport_i, airport_j]['weight'] + rho[airport_i] + rho[airport_j] <=
-                    settings.aircraft_config.tau + m3_vals[airport_i, airport_j] * (
-                            1 - z[airport_i, airport_j]))  # 4
+        m.addConstr(graph.edges[airport_i, airport_j]['weight'] + rho[airport_i] + rho[airport_j] <= tau +
+                    m3_vals[airport_i, airport_j] * (1 - z[airport_i, airport_j]))  # 4
         m.addConstr(z[airport_i, airport_j] <= 1 - chi[airport_i])  # 21
         m.addConstr(z[airport_i, airport_j] <= 1 - chi[airport_j])  # 22
-        m4_ij = settings.aircraft_config.tau - graph.edges[airport_i, airport_j]['weight']
-        m.addConstr(graph.edges[airport_i, airport_j]['weight'] + rho[airport_i] + rho[airport_j] +
-                    m4_ij * z[airport_i, airport_j] >= settings.aircraft_config.tau)  # 24
+        m4_ij = tau - graph.edges[airport_i, airport_j]['weight']
+        m.addConstr(graph.edges[airport_i, airport_j]['weight'] + rho[airport_i] + rho[airport_j] + m4_ij *
+                    z[airport_i, airport_j] >= tau)  # 24
 
     for id, path in enumerate(paths):
         path_edges = [tuple(sorted((path[i], path[i + 1]))) for i in range(len(path) - 1)]
@@ -61,17 +68,18 @@ def model(airports, paths, graph, population_cells_paths, destination_cells, des
         for edge in path_edges:
             m.addConstr(psi[id] <= z[edge])  # 5
 
-    for id in range(len(population_cells_paths)):
-        for destination_id, destination in enumerate(destination_cells):
-            path_indices = [i for i, p in enumerate(paths) if
-                            p in population_cells_paths[id] and p[-1] in destination_airports] # TODO : check if correct
+    for pop_cell in population_cells_paths:
+        for dest_cell, airport_idx, _ in destinations_airports_info:
+            pop_cell_paths_to_airport = [path for path in population_cells_paths[pop_cell] if path[-1] == airport_idx]
+            path_indices = [id for id, path in enumerate(paths) if path in pop_cell_paths_to_airport]
             if path_indices:
-                m.addConstr(phi[id, destination_id] <= gp.quicksum(psi[p_id] for p_id in path_indices))
+                m.addConstr(phi[pop_cell, dest_cell] <= gp.quicksum(psi[p_id] for p_id in path_indices))
             else:
-                m.addConstr(phi[id, destination_id] == 0)
+                m.addConstr(phi[pop_cell, dest_cell] == 0)
     m.update()
 
     return m, y, phi
+
 
 def calculate_tight_big_m(active_graph, tau, epsilon) -> tuple:
     """
@@ -163,7 +171,7 @@ def get_outputs_from_model(m):
     y_vars, psi_vars, phi_vars = get_y_psi_phi_variables(m)
 
     charging_airports = [int(v.VarName[2:-1]) for v in y_vars if v.X == 1]
-    population_covered = [eval(v.VarName[4:-1])[0] +eval(v.VarName[4:-1])[1] for v in phi_vars if v.X > 0.99]
+    population_covered = [eval(v.VarName[4:-1])[0] + eval(v.VarName[4:-1])[1] for v in phi_vars if v.X > 0.99]
     active_path_indices = np.array([int(v.VarName[4:-1]) for v in psi_vars if v.X == 1])
 
     nObjectives = m.NumObj
@@ -179,6 +187,7 @@ def get_outputs_from_model(m):
             solutions[s].append(m.ObjVal)
 
     return charging_airports, population_covered, active_path_indices, solutions
+
 
 def get_y_psi_phi_variables(m):
     all_vars = m.getVars()

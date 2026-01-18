@@ -10,7 +10,7 @@ _logger = logging.getLogger(__name__)
 
 
 def solve_eacn_model(population_density, activation_costs, attractive_paths, active_graph,
-                     population_cells_paths, destination_cells, destination_airports, ks, objective_lex=0):
+                     population_cells_paths, destinations_airports_info, tau, mip_gap, epsilon, ks, objective_lex=0):
     m = None
     start_time = time.time()
     cols = None
@@ -57,21 +57,25 @@ def solve_eacn_model(population_density, activation_costs, attractive_paths, act
     else:
         active_airports = active_graph.nodes()
         m, y_vars, phi_vars = model(active_airports, attractive_paths, active_graph, population_cells_paths,
-                                    destination_cells, destination_airports)
+                                    destinations_airports_info, tau, mip_gap, epsilon)
+
+        dest_airport_info = {dest_cell: airport_idx for dest_cell, airport_idx, _ in destinations_airports_info}
         population_covered = np.array(
-            [population_density[id] * phi_vars[id, _] for id in range(len(population_cells_paths))
-             for _ in range(len(destination_cells))]).sum()
+            [population_density[idx] * phi_vars[idx, dest_cell] for idx in population_cells_paths for dest_cell in
+             dest_airport_info.keys()]).sum()
         installation_cost = np.array([activation_costs[i] * y_vars[i] for i in active_airports]).sum()
         if settings.model_config.lexicographic:
             m.setObjective(settings.model_config.mu_1 * population_covered, GRB.MAXIMIZE)
             m.setParam('TimeLimit', settings.heuristic_config.max_run_time)
             m.optimize()
             best_obj_val = m.ObjVal
+            print(m.ObjVal)
             m.setObjective(settings.model_config.mu_2 * installation_cost, GRB.MINIMIZE)
             objective_func = (settings.model_config.mu_1 * population_covered)
             m.addConstr(objective_func >= best_obj_val)
             m.setParam('TimeLimit', settings.heuristic_config.max_run_time)
             m.optimize()
+            print(m.ObjVal)
             cols = m.NumVars
             rows = m.NumConstrs
             lb = m.ObjBound
@@ -80,6 +84,7 @@ def solve_eacn_model(population_density, activation_costs, attractive_paths, act
                               settings.model_config.mu_2 * installation_cost)
             m.setObjective(objective_func, GRB.MAXIMIZE)
             m.setParam('TimeLimit', settings.heuristic_config.max_run_time)
+            m.write("EACN_REG_model.lp")
             m.optimize()
 
     return m, time.time() - start_time, cols, rows, lb

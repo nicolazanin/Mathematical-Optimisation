@@ -8,7 +8,7 @@ population_config:
   destination_cells: [22]
 
 airports_config:
-  num: 15
+  num: 10
   min_distance: 30 # km
   min_cost: 1
   max_cost: 10

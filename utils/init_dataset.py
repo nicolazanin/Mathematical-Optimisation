@@ -212,7 +212,7 @@ def get_population_cells2airports_distances(population_coords: np.ndarray, airpo
 def get_destinations_airports_info(destination_cells: list, population_airport_distances: np.ndarray,
                                    max_ground_distance: float) -> list:
     """
-    For each destination cell, finds the closest airport and keeps it if within max_distance.
+    For each destination cell, finds the closest airport if within max_distance.
 
     Args:
         destination_cells (list): Indices of destination population cells.
@@ -234,6 +234,7 @@ def get_destinations_airports_info(destination_cells: list, population_airport_d
             _logger.info("For destination cell {}, the selected destination airports is: {} (closest one within the "
                          "maximum ground distance)".format(cell_idx, closest_airport_idx))
         else:
+            results.append((cell_idx, None, None))
             _logger.info(
                 "For destination cell {} there are no destination airports within the max ground distance".format(
                     cell_idx))
