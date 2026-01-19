@@ -24,7 +24,7 @@ def model(airports: list, paths: np.ndarray, graph: nx.Graph, population_cells_p
         max_run_time (int): The maximum run time in seconds.
 
     Returns:
-        tuple: A tuple containing the model, variable y and variable phi.
+        tuple: A tuple containing the model, variables y and variables phi.
 
     """
     m = gp.Model("eanc")
@@ -129,7 +129,7 @@ def get_tight_big_m(graph, tau, epsilon) -> tuple:
 
 def get_initial_kernel(population_cells_paths: dict, initial_kernel_size: int) -> list:
     """
-    Generates the initial kernel for the EACN-KS heuristic. For each airport nodes computes the number of population
+    Generates the initial kernel for the KS heuristic. For each airport nodes computes the number of population
     cells that could be served based on the paths that go through it, then ranks the airports in descending order and
     selects first part based on the initial kernel size.
 
@@ -162,11 +162,11 @@ def get_initial_kernel(population_cells_paths: dict, initial_kernel_size: int) -
 
 def get_buckets(airports: list, kernel: list, bucket_size: int) -> dict:
     """
-
+    Divides the set of non-kernel airports into buckets.
 
     Args:
         airports (list): List of airport IDs.
-        kernel (list):
+        kernel (list): Current kernel
         bucket_size (int): The size of the buckets we want to use.
 
     Returns:
@@ -182,35 +182,46 @@ def get_buckets(airports: list, kernel: list, bucket_size: int) -> dict:
 
 
 def get_outputs_from_model(m):
-    y_vars, psi_vars, phi_vars, rho_vars, chi_vars, z_vars, w_vars = get_y_psi_phi_variables(m)
+    y, psi, phi, rho, chi, z, w = get_model_variables(m)
 
-    charging_airports = [int(v.VarName[2:-1]) for v in y_vars if v.X == 1]
-    population_covered = sorted([eval(v.VarName[4:-1])[0] for v in phi_vars if v.X > 0.99])
-    active_path_indices = np.array([int(v.VarName[4:-1]) for v in psi_vars if v.X == 1])
+    charging_airports = [int(name[2:-1]) for name, value in y.items() if value == 1]
+    population_covered = sorted([eval(name[4:-1])[0] for name, value in phi.items() if value > 0.99])
+    active_path_indices = np.array([int(name[4:-1]) for name, value in psi.items() if value == 1])
 
-    nObjectives = m.NumObj
-    nSolutions = m.SolCount
-    solutions = defaultdict(list)
-    for s in range(nSolutions):
-        m.params.SolutionNumber = s
-        if nObjectives > 1:
-            for o in range(nObjectives):
-                m.params.ObjNumber = o
-                solutions[s].append(m.ObjNVal)
-        else:
-            solutions[s].append(m.ObjVal)
-
-    return charging_airports, population_covered, active_path_indices, solutions
+    return charging_airports, population_covered, active_path_indices, m.ObjBound
 
 
-def get_y_psi_phi_variables(m):
+def get_model_variables(m: gp.Model) -> tuple:
+    """
+    Extract variables from the model.
+
+    Args:
+        m (gp.Model): The Gurobi model to extract variables from.
+
+    Returns:
+        tuple: A tuple containing lists of model variables.
+    """
     all_vars = m.getVars()
-    y_vars = [v for v in all_vars if v.VarName.startswith('y[')]
-    psi_vars = [v for v in all_vars if v.VarName.startswith('psi[')]
-    phi_vars = [v for v in all_vars if v.VarName.startswith('phi[')]
-    rho_vars = [v for v in all_vars if v.VarName.startswith('rho[')]
-    chi_vars = [v for v in all_vars if v.VarName.startswith('chi[')]
-    z_vars = [v for v in all_vars if v.VarName.startswith('z[')]
-    w_vars = [v for v in all_vars if v.VarName.startswith('w[')]
+    y_vars = [v for v in all_vars if v.VarName.startswith('y')]
+    psi_vars = [v for v in all_vars if v.VarName.startswith('psi')]
+    phi_vars = [v for v in all_vars if v.VarName.startswith('phi')]
+    rho_vars = [v for v in all_vars if v.VarName.startswith('rho')]
+    chi_vars = [v for v in all_vars if v.VarName.startswith('chi')]
+    z_vars = [v for v in all_vars if v.VarName.startswith('z')]
+    w_vars = [v for v in all_vars if v.VarName.startswith('w')]
 
-    return y_vars, psi_vars, phi_vars, rho_vars, chi_vars, z_vars, w_vars
+    psi = vars_to_dict(psi_vars)
+    y = vars_to_dict(y_vars)
+    phi = vars_to_dict(phi_vars)
+    rho = vars_to_dict(rho_vars)
+    chi = vars_to_dict(chi_vars)
+    z = vars_to_dict(z_vars)
+    w = vars_to_dict(w_vars)
+
+    return y, psi, phi, rho, chi, z, w
+
+
+def vars_to_dict(var_list):
+    return {v.VarName: v.X for v in var_list }
+
+

@@ -4,8 +4,7 @@ import logging
 from gurobipy import GRB
 import networkx as nx
 
-from utils.settings import settings
-from model.utils_model import (get_initial_kernel, get_buckets, get_outputs_from_model, model, get_y_psi_phi_variables)
+from model.utils_model import (get_initial_kernel, get_buckets, get_outputs_from_model, model)
 
 _logger = logging.getLogger(__name__)
 
@@ -76,22 +75,17 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
                                                    for idx in population_cells_paths for dest_cell in
                                                    dest_airport_info.keys()]).sum()
                     installation_cost = np.array([activation_costs[i] * y_vars[i] for i in attractive_airports]).sum()
-                    objective_func = (settings.model_config.mu_1 * population_covered -
-                                      settings.model_config.mu_2 * installation_cost)
+                    objective_func = (mu_1 * population_covered - mu_2 * installation_cost)
                     m.setObjective(objective_func, GRB.MAXIMIZE)
                     m.addConstr(objective_func >= best_obj_val)
                     for not_candidates_airport in not_candidates_airports:
                         m.addConstr(y_vars[not_candidates_airport] == 0)
-                    m.write("EACN_REG_model.lp")
                     m.optimize()
-                    if m.Status == GRB.OPTIMAL:
+                    if m.Status == GRB.OPTIMAL: # NOT: TIME_LIMIT, GRB.INFEASIBLE, GRB.UNBOUNDED
                         charging_airports, active_path_indices, solutions = get_outputs_from_model(m)
                         kernel = kernel + [charging_airport for charging_airport in charging_airports
                                            if charging_airport not in kernel]
-                        best_obj_val = solutions[0][0]
-                    else:  # TIME_LIMIT, GRB.INFEASIBLE, GRB.UNBOUNDED
-                        pass
-                        # return m, time_limit
+                        best_obj_val = m.ObjVal
     else:
         m, y_vars, phi_vars = model(airports=attractive_airports, paths=attractive_paths, graph=attractive_graph,
                                     population_cells_paths=population_cells_paths,
