@@ -114,8 +114,8 @@ def nodes_generation(num_nodes: int, total_width: int, total_height: int, additi
 
     _logger.info("Created {} nodes within an area of {:.1f}km x {:.1f}km with a 'min_distance' between nodes of "
                  "{:.0f}km, added {} nodes based on manual settings".format(num_nodes, total_width,
-                                                                                        total_height, min_distance_km,
-                                                                                        len(additional_nodes)))
+                                                                            total_height, min_distance_km,
+                                                                            len(additional_nodes)))
 
     return coords
 
@@ -129,9 +129,10 @@ def get_activation_cost_airports(num_airports: int, min_cost: int, max_cost: int
         max_cost (int): Maximum activation cost.
 
     Returns:
-        np.ndarray: A NumPy array of random activation costs for each airport.
+        np.ndarray: A NumPy array of activation costs for each airport (based on 'min_cost' and 'max_cost').
     """
-    _logger.info("Generated random activation cost for each airport")
+    _logger.info(
+        "Generated random activation cost for each airport ('min_cost':{}, 'max_cost':{})".format(min_cost, max_cost))
     if min_cost == max_cost:
         return np.array([min_cost for _ in range(num_airports)])
     else:
@@ -168,14 +169,14 @@ def get_population_cells_near_airports(airports_coords: np.ndarray, population_c
 
     Args:
         airports_coords (np.ndarray): A NumPy array of shape (num_airports, 2) containing (x, y) coordinates of each
-        airport.
+            airport.
         population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
-        of population cell centers.
+            of population cell centers.
         max_ground_distance (float): Maximum allowed ground distance to consider a population cell "near" an airport.
 
     Returns:
         dict: A dictionary where each key is an airport index, and each value is a list of indices of population cells
-        located within the specified distance from that airport.
+            located within the specified distance from that airport.
     """
     population_cells_near_airports = {}
 
@@ -185,8 +186,9 @@ def get_population_cells_near_airports(airports_coords: np.ndarray, population_c
         near_cells = np.where(distances < max_ground_distance)[0].tolist()
         population_cells_near_airports[airport_idx] = near_cells
 
-    _logger.info("Identified all the population cells within a maximum ground distance of {}km from each airport (based "
-                 "on 'ground_access_config')".format(max_ground_distance))
+    _logger.info(
+        "Identified all the population cells within a maximum ground distance of {}km from each airport (based "
+        "on 'ground_access_config')".format(max_ground_distance))
 
     return population_cells_near_airports
 
@@ -197,12 +199,12 @@ def get_population_cells2airports_distances(population_coords: np.ndarray, airpo
 
     Args:
         airports_coords (np.ndarray): A NumPy array of shape (num_airports, 2) containing (x, y) coordinates of each
-        airport.
+            airport.
         population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
-        of population cell centers.
+            of population cell centers.
 
     Returns:
-        np.ndarray: Array of shape (num_population_cells,num_airports) with cells-airports distances.
+        np.ndarray: A NumPy array of shape (num_population_cells,num_airports) with cells-airports distances.
     """
     diff = population_coords[:, None, :] - airports_coords[None, :, :]
 
@@ -220,7 +222,7 @@ def get_destinations_airports_info(destination_cells: list, population_airport_d
         max_ground_distance (float): Maximum allowed ground distance to consider a population cell "near" an airport.
 
     Returns:
-        list: Each tuple in the list contains: (destination_cell_idx, closest_airport_idx, distance)
+        list: A list containing tuples of the form (destination_cell_idx, closest_airport_idx, distance)
     """
     results = []
     for cell_idx in destination_cells:

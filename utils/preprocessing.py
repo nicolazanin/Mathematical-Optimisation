@@ -5,14 +5,14 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-def get_threshold_graph(distances: dict, tau: float, mode: str = "below") -> nx.Graph:
+def get_threshold_graph(distances: dict, tau: int, mode: str = "below") -> nx.Graph:
     """
     Creates a single undirected graph by including edges based on a distance threshold.
 
     Args:
         distances (dict): A dictionary where each key is a tuple (i, j) representing a pair of node indices, and the
-        value is the Euclidean distance between node i and node j.
-        tau (float): Distance threshold for including edges.
+            value is the Euclidean distance between node i and node j.
+        tau (int): Distance threshold for including edges.
         mode (str): Determines which edges to include:
             - "below": includes edges with distance <= tau.
             - "above": includes edges with distance > tau.
@@ -69,7 +69,7 @@ def get_attractive_paths_from_rft(paths: np.ndarray, distances: dict, routing_fa
     Args:
         paths (list): A NumPy array of all simple paths (each path is a list of node IDs).
         distances (dict): A dictionary where each key is a tuple (i, j) representing a pair of nodes indices, and the
-        value is the Euclidean distance between node i and node j.
+            value is the Euclidean distance between node i and node j.
         routing_factor_thr (float): Ratio between the path’s total distance and the nonstop distance
 
     Returns:
@@ -81,7 +81,6 @@ def get_attractive_paths_from_rft(paths: np.ndarray, distances: dict, routing_fa
         for i in range(len(path) - 1):
             node_pair = tuple(sorted((path[i], path[i + 1])))
             total_distance += distances[node_pair]
-
         direct_pair = tuple(sorted((path[0], path[-1])))
         direct_distance = distances[direct_pair]
 
@@ -114,25 +113,25 @@ def get_population_cells_paths(population_coords, paths: np.ndarray, distances: 
 
     Args:
         population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
-        of population cell centers.
+            of population cell centers.
         paths (np.ndarray): A NumPy array of paths (each path is a list of node IDs).
         distances (dict): A dictionary where each key is a tuple (i, j) representing a pair of nodes indices, and the
-        value is the Euclidean distance between node i and node j.
+            value is the Euclidean distance between node i and node j.
         population_cells_near_airports (dict): A dictionary where each key is an airport index, and each value is a list
-        of indices of population cells located within the specified distance from that airport.
+            of indices of population cells located within the specified distance from that airport.
         destinations_airports_info (list): Each tuple in the list contains: (destination_cell_idx, closest_airport_idx,
-        distance)
+            distance)
         population_cells2airport_distances (np.ndarray): Array of shape (num_population_cells,num_airports) with
-        cells-airports distances.
+            cells-airports distances.
         population_cells_too_close_to_destination_cells (dict): Dictionary mapping each destination cell to an array of
-        population cell indices that are too close to it.
+            population cell indices that are too close to it.
         ground_speed (int): Average ground speed.
         air_speed (int): Aircraft cruise speed.
         max_total_time (float): Maximum total travel time threshold (ground access component + flight time)
 
     Returns:
         dict: A dictionary mapping each population cell index to a list of paths (each path is a list of node IDs)
-        starting from an airport near that population cell.
+            starting from an airport near that population cell.
     """
     dest_airport_info = {
         airport_idx: {
@@ -182,12 +181,12 @@ def get_population_cells_too_close_to_destination_cells(population_coords: np.nd
 
     Args:
         population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
-        of population cell centers.
+            of population cell centers.
         destination_cells (list): Indices of destination population cells.
         min_distance(float): Minimum allowed distance from (km).
 
     Returns:
-        dict: Dictionary mapping each destination cell to an array of population cell indices that are too close to it.
+        dict: A dictionary mapping each destination cell to an array of population cell indices that are too close to it.
     """
     target_coords = population_coords[destination_cells]
     diff = target_coords[:, None, :] - population_coords[None, :, :]
@@ -212,7 +211,7 @@ def get_attractive_paths(population_cells_paths: dict) -> np.ndarray:
 
     Args:
         population_cells_paths (dict): A dictionary mapping each population cell index to a list of paths (each path is
-        a list of node IDs) starting from an airport near that population cell.
+            a list of node IDs) starting from an airport near that population cell.
 
     Returns:
          np.ndarray: A NumPy array of attractive paths (each path is a list of node IDs).
@@ -229,7 +228,7 @@ def get_attractive_graph(distances: dict, attractive_paths: np.ndarray) -> nx.Gr
 
     Args:
         distances (dict): A dictionary where each key is a tuple (i, j) representing a pair of nodes indices, and the
-        value is the Euclidean distance between node i and node j.
+            value is the Euclidean distance between node i and node j.
         attractive_paths (np.ndarray): A NumPy array of attractive paths (each path is a list of node IDs).
 
     Returns:

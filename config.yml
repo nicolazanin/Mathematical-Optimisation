@@ -8,14 +8,14 @@ population_config:
   destination_cells: [22]
 
 airports_config:
-  num: 10
+  num: 15
   min_distance: 30 # km
   min_cost: 1
   max_cost: 10
   additional_airport_coords: [[240, 420], [160,579], [120, 569]]
 
 aircraft_config:
-  tau: 400 # single charge range
+  tau: 400 # maximum travel range on a single charge
   cruise_speed: 400 # km per hours
 
 ground_access_config:
@@ -31,18 +31,18 @@ paths_config:
                                                   # form that population cell as attractive
 
 model_config:
-  epsilon: 30
-  mu_1: 1
-  mu_2: 0.01
-  lexicographic: True
-  mip_gap: 0.000
+  epsilon: 30 # small positive number to define big-M parameters
+  mu_1: 1 # weight of first objective function
+  mu_2: 0.01 # weight of first objective function
+  lexicographic: True # true if the model combines the two objective functions in a lexicographic order
+  mip_gap: 0.000 # MIP gap termination condition value
+  max_run_time: 200 # model maximum run time in seconds
 
 heuristic_config:
-  enable: False
-  initial_kernel_size: 5
-  bucket_size: 10
-  iterations: 3
-  max_run_time: 5
+  enable: False # true if the kernel search heuristic is enabled.
+  initial_kernel_size: 5 # kernel search heuristic initial kernel size
+  buckets_size: 10 # kernel search heuristic buckets size
+  iterations: 3 # kernel search heuristic total iterations
 
 random_seed: 559
 logging_lvl: 10 # 10: debug; 20: info

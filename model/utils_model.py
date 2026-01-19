@@ -2,36 +2,45 @@ import random
 import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
+import networkx as nx
 from collections import defaultdict
 
 
-def model(airports, paths, graph, population_cells_paths, destinations_airports_info, tau, mip_gap, epsilon):
+def model(airports: list, paths: np.ndarray, graph: nx.Graph, population_cells_paths: dict,
+          destinations_airports_info: list, tau: int, mip_gap: float, epsilon: int, max_run_time: int) -> tuple:
     """
 
     Args:
-        airports :
-        paths :
-        graph :
+        airports (list): List of airport IDs.
+        paths (np.ndarray): A NumPy array of paths (each path is a list of node IDs).
+        graph (nx.Graph): A NetworkX graph containing the paths.
         population_cells_paths (dict): A dictionary mapping each population cell index to a list of paths (each path is
-        a list of node IDs) starting from an airport near that population cell.
+            a list of node IDs) starting from an airport near that population cell.
         destinations_airports_info (list): Each tuple in the list contains: (destination_cell_idx, closest_airport_idx,
-        distance)
+            distance)
+        tau (int): Maximum travel range on a single charge.
+        mip_gap (float): MIP gap termination condition value.
+        epsilon (int): Small positive number to define big-M parameters.
+        max_run_time (int): The maximum run time in seconds.
 
     Returns:
+        tuple: A tuple containing the model, variable y and variable phi.
 
     """
     m = gp.Model("eanc")
     m.setParam('LogToConsole', 0)
     m.setParam('MIPGap', mip_gap)
-    m1_vals, m2_vals, m3_vals = calculate_tight_big_m(active_graph=graph, tau=tau, epsilon=epsilon)
+    m.setParam('TimeLimit', max_run_time)
+    m1_vals, m2_vals, m3_vals = get_tight_big_m(graph=graph, tau=tau, epsilon=epsilon)
     y = m.addVars([i for i in airports], vtype=GRB.BINARY, name="y")
     rho = m.addVars([i for i in airports], vtype=GRB.CONTINUOUS, name="rho", lb=0.0)
     chi = m.addVars([i for i in airports], vtype=GRB.BINARY, name="chi")
 
     canonical_edges = sorted(list(tuple(sorted(edge)) for edge in graph.edges()))
-
     z = m.addVars(canonical_edges, vtype=GRB.BINARY, name="z")
-    w = m.addVars(canonical_edges, vtype=GRB.BINARY, name="w")
+
+    w = m.addVars([(i, j) for i in airports for j in graph.neighbors(i)],
+                  vtype=GRB.BINARY, name="w")
 
     dest_airports_info = {dest_cell: airport_idx for dest_cell, airport_idx, _ in destinations_airports_info}
 
@@ -41,14 +50,14 @@ def model(airports, paths, graph, population_cells_paths, destinations_airports_
     for airport in airports:
         neighbors = list(graph.neighbors(airport))
         m.addConstr(rho[airport] <= m1_vals[airport] * (1 - y[airport]))  # 12
-        m.addConstr(y[airport] + gp.quicksum(w[tuple(sorted((airport, neighbor)))] for neighbor in neighbors) +
+        m.addConstr(y[airport] + gp.quicksum(w[(airport, neighbor)] for neighbor in neighbors) +
                     chi[airport] == 1)  # 16
         m.addConstr(rho[airport] >= m1_vals[airport] * chi[airport])  # 15
         for neighbor in neighbors:
-            edge = tuple(sorted((airport, neighbor)))
             m.addConstr(rho[airport] <= graph.edges[airport, neighbor]['weight'] + rho[neighbor])  # 13
-            m.addConstr(rho[airport] >= graph.edges[airport, neighbor]['weight'] + rho[neighbor] - m2_vals[edge] * (
-                    1 - w[edge]))  # 14
+            m.addConstr(rho[airport] >= graph.edges[airport, neighbor]['weight'] + rho[neighbor] - m2_vals[
+                (airport, neighbor)] * (
+                                1 - w[(airport, neighbor)]))  # 14
 
         min_dist_to_neighbor = min(graph.edges[airport, neighbor]['weight'] for neighbor in neighbors)
         m.addConstr(rho[airport] >= min(min_dist_to_neighbor, m1_vals[airport]) * (1 - y[airport]))  # 20
@@ -62,16 +71,16 @@ def model(airports, paths, graph, population_cells_paths, destinations_airports_
         m.addConstr(graph.edges[airport_i, airport_j]['weight'] + rho[airport_i] + rho[airport_j] + m4_ij *
                     z[airport_i, airport_j] >= tau)  # 24
 
-    for id, path in enumerate(paths):
+    for idx, path in enumerate(paths):
         path_edges = [tuple(sorted((path[i], path[i + 1]))) for i in range(len(path) - 1)]
-        m.addConstr(psi[id] - gp.quicksum(z[edge] for edge in path_edges) >= 1 - len(path_edges))  # 23
+        m.addConstr(psi[idx] - gp.quicksum(z[edge] for edge in path_edges) >= 1 - len(path_edges))  # 23
         for edge in path_edges:
-            m.addConstr(psi[id] <= z[edge])  # 5
+            m.addConstr(psi[idx] <= z[edge])  # 5
 
     for pop_cell in population_cells_paths:
         for dest_cell, airport_idx, _ in destinations_airports_info:
             pop_cell_paths_to_airport = [path for path in population_cells_paths[pop_cell] if path[-1] == airport_idx]
-            path_indices = [id for id, path in enumerate(paths) if path in pop_cell_paths_to_airport]
+            path_indices = [idx for idx, path in enumerate(paths) if path in pop_cell_paths_to_airport]
             if path_indices:
                 m.addConstr(phi[pop_cell, dest_cell] <= gp.quicksum(psi[p_id] for p_id in path_indices))
             else:
@@ -81,56 +90,57 @@ def model(airports, paths, graph, population_cells_paths, destinations_airports_
     return m, y, phi
 
 
-def calculate_tight_big_m(active_graph, tau, epsilon) -> tuple:
+def get_tight_big_m(graph, tau, epsilon) -> tuple:
     """
-    Returns the tight big m in order to tighten the model relaxation and accelerate the convergence of branch-and-cut
+    Calculates the tight big-M in order to tighten the model relaxation and accelerate the convergence of branch-and-cut
     algorithms.
 
     Args:
-        active_graph (nx.Graph): A NetworkX active airports graph.
-        tau (int): Maximum travel range on a single charge
-        epsilon (int): Small positive number
+        graph (nx.Graph): A NetworkX graph containing the paths.
+        tau (int): Maximum travel range on a single charge.
+        epsilon (int): Small positive number to define big-M parameters.
+
     Returns:
-        tuple: Big M parameters.
+        tuple: A tuple of 3 dictionaries (for big-M 1, 2, 3) where each key is a tuple (i, j) representing a pair of
+            nodes indices, and the value is the big-M parameter between node i and node j.
     """
     m1_vals = {}
-    for airport in list(active_graph.nodes):
-        neighbors = list(active_graph.neighbors(airport))
-        min_dist_to_neighbor = min(active_graph.edges[airport, neighbor]['weight'] for neighbor in neighbors)
+    for airport in list(graph.nodes):
+        neighbors = list(graph.neighbors(airport))
+        min_dist_to_neighbor = min(graph.edges[airport, neighbor]['weight'] for neighbor in neighbors)
         m1_vals[airport] = tau - min_dist_to_neighbor + epsilon
 
     m2_vals = {}
     m3_vals = {}
-    for i, j in active_graph.edges():
-        edge = tuple(sorted((i, j)))
+    for i, j in graph.edges():
+        neighbors_i = list(graph.neighbors(i))
+        neighbors_j = list(graph.neighbors(j))
 
-        neighbors_i = list(active_graph.neighbors(edge[0]))
-        neighbors_j = list(active_graph.neighbors(edge[1]))
+        min_dist_from_j = min(graph.edges[j, neighbor]['weight'] for neighbor in neighbors_j)
+        min_dist_from_i = min(graph.edges[i, neighbor]['weight'] for neighbor in neighbors_i)
 
-        min_dist_from_j = min(active_graph.edges[edge[1], neighbor]['weight'] for neighbor in neighbors_j)
-        min_dist_from_i = min(active_graph.edges[edge[0], neighbor]['weight'] for neighbor in neighbors_i)
-
-        m2_vals[edge] = (
-                active_graph.edges[edge[0], edge[1]]['weight'] + tau - min_dist_from_j + epsilon)
-        m3_vals[edge] = (
-                active_graph.edges[edge[0], edge[1]]['weight'] + tau - min_dist_from_i - min_dist_from_j + epsilon * 2)
+        m2_vals[(i, j)] = (graph.edges[i, j]['weight'] + tau - min_dist_from_j + epsilon)
+        m3_vals[(i, j)] = (graph.edges[i, j]['weight'] + tau - min_dist_from_i - min_dist_from_j + epsilon * 2)
+        m2_vals[(j, i)] = (graph.edges[j, i]['weight'] + tau - min_dist_from_i + epsilon)
+        m3_vals[(j, i)] = (graph.edges[j, i]['weight'] + tau - min_dist_from_j - min_dist_from_i + epsilon * 2)
 
     return m1_vals, m2_vals, m3_vals
 
 
-def get_initial_kernel(population_cells_paths, initial_kernel_size) -> list:
+def get_initial_kernel(population_cells_paths: dict, initial_kernel_size: int) -> list:
     """
-    Return the initial kernel for the EACN-KS heuristic. For each airport nodes computes the number of population cells
-    that could be served based on the paths that go through it, then ranks the airports in descending order and selects
-    first part based on the initial kernel size.
-    Args:
-        population_cells_paths (dict): Dictionary mapping each population cell index to a list of paths (each path is a list of node
-        IDs) starting from an airport near that population cell.
-        initial_kernel_size (int): The initial kernel size.
-    Returns:
-        initial_kernel (list): List of airports nodes IDs chosen for the initial kernel.
-    """
+    Generates the initial kernel for the EACN-KS heuristic. For each airport nodes computes the number of population
+    cells that could be served based on the paths that go through it, then ranks the airports in descending order and
+    selects first part based on the initial kernel size.
 
+    Args:
+        population_cells_paths (dict): A dictionary mapping each population cell index to a list of paths (each path is
+            a list of node IDs) starting from an airport near that population cell.
+        initial_kernel_size (int): # Kernel search heuristic initial kernel size.
+
+    Returns:
+        list: A list of airports nodes IDs chosen for the initial kernel.
+    """
     airport_served_pops = defaultdict(list)
     for pop_id, paths in population_cells_paths.items():
         for path in paths:
@@ -150,28 +160,32 @@ def get_initial_kernel(population_cells_paths, initial_kernel_size) -> list:
     return initial_kernel
 
 
-def get_buckets(airports, kernel, bucket_size) -> dict:
+def get_buckets(airports: list, kernel: list, bucket_size: int) -> dict:
     """
 
+
+    Args:
+        airports (list): List of airport IDs.
+        kernel (list):
+        bucket_size (int): The size of the buckets we want to use.
+
+    Returns:
+        dict: A dictionary where each key is a bucket index, and each value is a list of airport IDs representing the
+            bucket.
     """
-    not_kernel = [airport for airport in airports if airport not in kernel]
+    not_kernel = list(set(airports) - set(kernel))
     random.shuffle(not_kernel)
-    num_backets = len(not_kernel) // bucket_size
-    buckets = {}
-    for i in range(num_backets):
-        if (i + 1) * bucket_size > len(not_kernel):
-            end = len(not_kernel)
-        else:
-            end = (i + 1) * bucket_size
-        buckets[i] = not_kernel[i * bucket_size:end]
+    buckets = {i: not_kernel[i * bucket_size:(i + 1) * bucket_size] for i in range((len(not_kernel) + bucket_size - 1)
+                                                                                   // bucket_size)}
+
     return buckets
 
 
 def get_outputs_from_model(m):
-    y_vars, psi_vars, phi_vars = get_y_psi_phi_variables(m)
+    y_vars, psi_vars, phi_vars, rho_vars, chi_vars, z_vars, w_vars = get_y_psi_phi_variables(m)
 
     charging_airports = [int(v.VarName[2:-1]) for v in y_vars if v.X == 1]
-    population_covered = [eval(v.VarName[4:-1])[0] + eval(v.VarName[4:-1])[1] for v in phi_vars if v.X > 0.99]
+    population_covered = sorted([eval(v.VarName[4:-1])[0] for v in phi_vars if v.X > 0.99])
     active_path_indices = np.array([int(v.VarName[4:-1]) for v in psi_vars if v.X == 1])
 
     nObjectives = m.NumObj
@@ -194,5 +208,9 @@ def get_y_psi_phi_variables(m):
     y_vars = [v for v in all_vars if v.VarName.startswith('y[')]
     psi_vars = [v for v in all_vars if v.VarName.startswith('psi[')]
     phi_vars = [v for v in all_vars if v.VarName.startswith('phi[')]
+    rho_vars = [v for v in all_vars if v.VarName.startswith('rho[')]
+    chi_vars = [v for v in all_vars if v.VarName.startswith('chi[')]
+    z_vars = [v for v in all_vars if v.VarName.startswith('z[')]
+    w_vars = [v for v in all_vars if v.VarName.startswith('w[')]
 
-    return y_vars, psi_vars, phi_vars
+    return y_vars, psi_vars, phi_vars, rho_vars, chi_vars, z_vars, w_vars

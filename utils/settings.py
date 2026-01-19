@@ -55,14 +55,14 @@ class ModelConfig:
     mu_2: float
     lexicographic: bool
     mip_gap: float
+    max_run_time: int
 
 @dataclass
 class HeuristicConfig:
     enable: bool
     initial_kernel_size: int
-    bucket_size: int
+    buckets_size: int
     iterations: int
-    max_run_time: int
 
 
 @dataclass

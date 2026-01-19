@@ -1,4 +1,3 @@
-import sys
 import numpy as np
 from gurobipy import GRB
 import logging
@@ -82,28 +81,33 @@ min_distance_to_destination_cells = (settings.ground_access_config.avg_speed *
 population_cells_too_close_to_destination_cells = get_population_cells_too_close_to_destination_cells(
     population_coords=population_coords, destination_cells=settings.population_config.destination_cells,
     min_distance=min_distance_to_destination_cells)
-population_cells_paths = get_population_cells_paths(population_coords=population_coords,
-                                                    paths=attractive_paths_from_rft, distances=airports_distances,
-                                                    population_cells_near_airports=population_cells_near_airports,
-                                                    destinations_airports_info=destinations_airports_info,
-                                                    population_cells2airport_distances=population_cells2airport_distances,
-                                                    population_cells_too_close_to_destination_cells=population_cells_too_close_to_destination_cells,
-                                                    ground_speed=settings.ground_access_config.avg_speed,
-                                                    air_speed=settings.aircraft_config.cruise_speed,
-                                                    max_total_time=settings.paths_config.max_total_time_travel)
+population_cells_paths = (
+    get_population_cells_paths(population_coords=population_coords,
+                               paths=attractive_paths_from_rft, distances=airports_distances,
+                               population_cells_near_airports=population_cells_near_airports,
+                               destinations_airports_info=destinations_airports_info,
+                               population_cells2airport_distances=population_cells2airport_distances,
+                               population_cells_too_close_to_destination_cells=population_cells_too_close_to_destination_cells,
+                               ground_speed=settings.ground_access_config.avg_speed,
+                               air_speed=settings.aircraft_config.cruise_speed,
+                               max_total_time=settings.paths_config.max_total_time_travel))
 attractive_paths = get_attractive_paths(population_cells_paths=population_cells_paths)
-get_attractive_graph = get_attractive_graph(distances=airports_distances, attractive_paths=attractive_paths)
+attractive_graph = get_attractive_graph(distances=airports_distances, attractive_paths=attractive_paths)
 
 _logger.info("-------------- MILP Optimization --------------")
-m, time_exec, cols, rows, lb = solve_eacn_model(population_density=population_density,
-                                                attractive_paths=attractive_paths,
-                                                activation_costs=activation_costs,
-                                                active_graph=airports_graph_below_tau,
-                                                population_cells_paths=population_cells_paths,
-                                                destinations_airports_info=destinations_airports_info,
-                                                tau = settings.aircraft_config.tau,
-                                                mip_gap = settings.model_config.mip_gap,
-                                                epsilon = settings.model_config.epsilon, ks=False)
+m, time_exec = solve_eacn_model(population_density=population_density, attractive_paths=attractive_paths,
+                                activation_costs=activation_costs, attractive_graph=attractive_graph,
+                                population_cells_paths=population_cells_paths,
+                                destinations_airports_info=destinations_airports_info,
+                                tau=settings.aircraft_config.tau, mu_1=settings.model_config.mu_1,
+                                mu_2=settings.model_config.mu_2, mip_gap=settings.model_config.mip_gap,
+                                epsilon=settings.model_config.epsilon,
+                                lexicographic=settings.model_config.lexicographic,
+                                ks=settings.heuristic_config.enable,
+                                initial_kernel_size=settings.heuristic_config.initial_kernel_size,
+                                buckets_size=settings.heuristic_config.buckets_size,
+                                iterations=settings.heuristic_config.iterations,
+                                max_run_time=settings.model_config.max_run_time)
 charging_airports = []
 active_path_indices = []
 if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
