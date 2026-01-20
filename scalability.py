@@ -1,21 +1,22 @@
-import sys
 import numpy as np
 from gurobipy import GRB
+from datetime import datetime
 import logging
 import time
-import pandas as pd
 
 from utils.init_dataset import (cells_generation, nodes_generation, get_population_cells_near_airports,
-                                get_pop_density, nodes_distances, grid_dimensions,
-                                get_destination_cells2destination_airports, get_activation_cost_airports,
-                                get_closest_airport_from_destination_cell)
-from utils.preprocessing import (create_threshold_graph, get_attractive_paths, get_all_paths_to_destinations,
-                                 get_population_cells_paths, create_active_graph)
+                                get_pop_density, get_nodes_distances, get_grid_dimensions,
+                                get_activation_cost_airports, get_destinations_airports_info,
+                                get_population_cells2airports_distances)
+from utils.preprocessing import (get_threshold_graph, get_attractive_paths_from_rft, get_all_paths_to_destinations,
+                                 get_population_cells_paths, get_population_cells_too_close_to_destination_cells,
+                                 get_attractive_paths, get_attractive_graph)
 from model.utils_model import get_outputs_from_model
-from utils.plot import plot_dataset
 from model.eanc_reg_model import solve_eacn_model
-from utils.settings import settings, setup_logging
-from scalability_params import scalability_params
+from utils.settings import setup_logging, settings
+from utils.scalability_utils import apply_preset, init_results_dict, print_report
+
+settings = settings.from_yaml("config_scalability.yml")
 
 tic = time.time()
 
@@ -25,115 +26,123 @@ _logger.setLevel(settings.logging_lvl)
 
 _logger.info("-------------- EACN-REG scalability starting --------------")
 
-settings.population_config.max_density = 1
-settings.airports_config.max_cost = 1
-
-results = {}
-results["test"] = []
-for k in range(0, 3 * 2, 2):
-    results[k] = []
-    results[k + 1] = []
-for i in range(5):
+results = init_results_dict()
+for i in range(10):
     results["test"].append(i)
-    settings.random_seed = i
-    _logger.info("-------------- Initialize the population grid dataset --------------")
-    population_coords = cells_generation(num_cells_x=settings.population_config.cells_x,
-                                         num_cells_y=settings.population_config.cells_y,
-                                         cell_area=settings.population_config.cell_area)
-    population_density = get_pop_density(population_coords=population_coords,
-                                         min_density=settings.population_config.min_density,
-                                         max_density=settings.population_config.max_density)
+    results["K"].append(settings.population_config.cells_x * settings.population_config.cells_y)
+    results["N"].append(settings.airports_config.num)
+    results["tau"].append(settings.aircraft_config.tau)
+    destination_airports = []
+    while len(destination_airports) == 0:
+        settings.random_seed = np.random.randint(1, 10000)
+        _logger.info("-------------- Initialize the population grid dataset --------------")
+        population_coords = cells_generation(num_cells_x=settings.population_config.cells_x,
+                                             num_cells_y=settings.population_config.cells_y,
+                                             cell_area=settings.population_config.cell_area)
+        population_density = get_pop_density(population_coords=population_coords,
+                                             min_density=settings.population_config.min_density,
+                                             max_density=settings.population_config.max_density,
+                                             high_population_cells=settings.population_config.high_population_cells)
 
-    _logger.info("-------------- Initialize the airports dataset --------------")
-    total_width_pop_area, total_height_pop_area = grid_dimensions(num_cells_x=settings.population_config.cells_x,
-                                                                  num_cells_y=settings.population_config.cells_y,
-                                                                  cell_area=settings.population_config.cell_area)
-    airports_coords = nodes_generation(num_nodes=settings.airports_config.num,
-                                       total_width=total_width_pop_area,
-                                       total_height=total_height_pop_area,
-                                       min_distance_km=settings.airports_config.min_distance)
-    activation_costs = get_activation_cost_airports(num_airports=settings.airports_config.num,
-                                                    max_cost=settings.airports_config.max_cost,
-                                                    min_cost=settings.airports_config.min_cost)
-    airports_distances = nodes_distances(nodes_coords=airports_coords)
+        _logger.info("-------------- Initialize the airports dataset --------------")
+        total_width_pop_area, total_height_pop_area = get_grid_dimensions(num_cells_x=settings.population_config.cells_x,
+                                                                          num_cells_y=settings.population_config.cells_y,
+                                                                          cell_area=settings.population_config.cell_area)
+        airports_coords = nodes_generation(num_nodes=settings.airports_config.num,
+                                           total_width=total_width_pop_area,
+                                           total_height=total_height_pop_area,
+                                           additional_nodes=settings.airports_config.additional_airport_coords,
+                                           min_distance_km=settings.airports_config.min_distance)
+        activation_costs = get_activation_cost_airports(num_airports=np.size(airports_coords),
+                                                        max_cost=settings.airports_config.max_cost,
+                                                        min_cost=settings.airports_config.min_cost)
+        airports_distances = get_nodes_distances(nodes_coords=airports_coords)
+        _logger.info("-------------- Define Destination Airport/s --------------")
+        max_ground_distance = settings.ground_access_config.avg_speed * settings.ground_access_config.max_time / 60
+        population_cells_near_airports = get_population_cells_near_airports(airports_coords=airports_coords,
+                                                                            population_coords=population_coords,
+                                                                            max_ground_distance=max_ground_distance)
 
-    _logger.info("-------------- Define Destination Airport/s --------------")
-    max_ground_distance = settings.ground_access_config.avg_speed * settings.ground_access_config.max_time / 60
-    population_cells_near_airports = get_population_cells_near_airports(airports_coords=airports_coords,
-                                                                        population_coords=population_coords,
-                                                                        max_ground_distance=max_ground_distance)
-    if settings.model_config.closest_airport_to_destination_cell:
-        destination_cells2destination_airports = {
-            settings.population_config.destination_cells[0]: [get_closest_airport_from_destination_cell(
-                airports_coords=airports_coords, population_coords=population_coords,
-                destination_cell=settings.population_config.destination_cells[0])]}
-        _logger.info("Destination airport is chosen based on the minimum distance from the first destination cell.")
-        destination_airports = [destination_airport for airports in destination_cells2destination_airports.values()
-                                for destination_airport in airports]
-        _logger.info("For destination cells {}, the selected destination airports is: {}".
-                     format(settings.population_config.destination_cells[0], destination_airports))
-    else:
-        destination_cells2destination_airports = get_destination_cells2destination_airports(
+        population_cells2airport_distances = get_population_cells2airports_distances(population_coords=population_coords,
+                                                                                     airports_coords=airports_coords)
+
+        destinations_airports_info = get_destinations_airports_info(
             destination_cells=settings.population_config.destination_cells,
-            population_cells_near_airports=population_cells_near_airports)
-        _logger.info("Destination airports based on the maximum ground distance from the destination cells")
-        destination_airports = [destination_airport for airports in destination_cells2destination_airports.values()
-                                for destination_airport in airports]
-        _logger.info("For destination cells {}, the selected destination airports is/are: {}".
-                     format(settings.population_config.destination_cells, destination_airports))
-    if len(destination_airports) == 0:
-        _logger.error("Empty destination airports list.")
-        sys.exit()
-    destination_airports = np.array(destination_airports)
+            population_airport_distances=population_cells2airport_distances, max_ground_distance=max_ground_distance)
+        destination_airports = np.array([destination_airport_prop[1] for destination_airport_prop in
+                                         destinations_airports_info if destination_airport_prop[1] is not None])
 
     _logger.info("------------- Pre-Processing --------------")
     # Create two graph to identify the edges above and below the distance threshold tau (single charge range)
-    airports_graph_below_tau = create_threshold_graph(distances=airports_distances,
-                                                      tau=settings.aircraft_config.tau)
-    airports_graph_above_tau = create_threshold_graph(distances=airports_distances,
-                                                      tau=settings.aircraft_config.tau, mode='above')
+    airports_graph_below_tau = get_threshold_graph(distances=airports_distances,
+                                                   tau=settings.aircraft_config.tau)
+    airports_graph_above_tau = get_threshold_graph(distances=airports_distances,
+                                                   tau=settings.aircraft_config.tau, mode='above')
 
     _logger.info("-------------- Define Paths --------------")
     all_paths = get_all_paths_to_destinations(graph=airports_graph_below_tau,
                                               destination_airports=destination_airports,
                                               max_path_edges=settings.paths_config.max_edges)
-    attractive_paths = get_attractive_paths(paths=all_paths,
-                                            distances=airports_distances,
-                                            routing_factor_thr=settings.paths_config.routing_factor_thr)
-    active_graph = create_active_graph(distances=airports_distances,attractive_paths=attractive_paths)
-    population_cells_paths = get_population_cells_paths(population_coords=population_coords,
-                                                        paths=attractive_paths,
-                                                        population_cells_near_airports=population_cells_near_airports)
+    attractive_paths_from_rft = get_attractive_paths_from_rft(paths=all_paths, distances=airports_distances,
+                                                              routing_factor_thr=settings.paths_config.routing_factor_thr)
+
+    min_distance_to_destination_cells = (settings.ground_access_config.avg_speed *
+                                         settings.paths_config.min_ground_travel_time_to_destination_cell)
+    population_cells_too_close_to_destination_cells = get_population_cells_too_close_to_destination_cells(
+        population_coords=population_coords, destination_cells=settings.population_config.destination_cells,
+        min_distance=min_distance_to_destination_cells)
+    population_cells_paths = (
+        get_population_cells_paths(population_coords=population_coords,
+                                   paths=attractive_paths_from_rft, distances=airports_distances,
+                                   population_cells_near_airports=population_cells_near_airports,
+                                   destinations_airports_info=destinations_airports_info,
+                                   population_cells2airport_distances=population_cells2airport_distances,
+                                   population_cells_too_close_to_destination_cells=population_cells_too_close_to_destination_cells,
+                                   ground_speed=settings.ground_access_config.avg_speed,
+                                   air_speed=settings.aircraft_config.cruise_speed,
+                                   max_total_time=settings.paths_config.max_total_time_travel))
+    attractive_paths = get_attractive_paths(population_cells_paths=population_cells_paths)
+    attractive_graph = get_attractive_graph(distances=airports_distances, attractive_paths=attractive_paths)
 
     _logger.info("-------------- MILP Optimization --------------")
-    for k in range(3):
-        settings.model_config.mu_2 = scalability_params[k]["mu_2"]
-        settings.model_config.lexicographic = scalability_params[k]["lexicographic"]
-        settings.model_config.mip_gap = scalability_params[k]["mip_gap"]
-        settings.heuristic_config.iterations = scalability_params[k]["iterations"]
-        m, time_op = solve_eacn_model(population_density=population_density, attractive_paths=attractive_paths,
-                             activation_costs=activation_costs, active_graph=active_graph,
-                             population_cells_paths=population_cells_paths,
-                             destination_cells2destination_airports=destination_cells2destination_airports,
-                                   ks=settings.kernel_search)
-        charging_airports, population_covered = [], []
-        if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
-            charging_airports, population_covered, active_path_indices, solutions = get_outputs_from_model(m)
-            _logger.info("Charging airports: {}".format(str(charging_airports)))
-            _logger.info("Population covered: {}".format(str(len(population_covered))))
-            _logger.info("Active paths: {}".format(str(active_path_indices)))
-            for sol in solutions:
-                _logger.info("Solutions {}: {} ".format(sol, solutions[sol]))
-        else:
-            _logger.info("No feasible solution was found. Status:".format(m.Status))
+    for test_name in ["b&c", "kn_1", "kn_3"]:
+        apply_preset(settings, "scalability_tests.yml", test_name)
 
-        results[k*2].append(len(population_covered))
-        results[k*2+1].append(len(charging_airports))
+        m, time_exec = solve_eacn_model(population_density=population_density, attractive_paths=attractive_paths,
+                                        activation_costs=activation_costs, attractive_graph=attractive_graph,
+                                        population_cells_paths=population_cells_paths,
+                                        destinations_airports_info=destinations_airports_info,
+                                        tau=settings.aircraft_config.tau, mu_1=settings.model_config.mu_1,
+                                        mu_2=settings.model_config.mu_2, mip_gap=settings.model_config.mip_gap,
+                                        epsilon=settings.model_config.epsilon,
+                                        lexicographic=settings.model_config.lexicographic,
+                                        ks=settings.heuristic_config.enable,
+                                        initial_kernel_size=settings.heuristic_config.initial_kernel_size,
+                                        buckets_size=settings.heuristic_config.buckets_size,
+                                        iterations=settings.heuristic_config.iterations,
+                                        max_run_time=settings.model_config.max_run_time)
+
+        charging_airports, population_covered = [], []
+        bound = None
+        if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
+            charging_airports, population_covered, active_path_indices, bound = get_outputs_from_model(m)
+            _logger.info("Charging airports: {} ({})".format(str(charging_airports), len(charging_airports)))
+            _logger.info("Population covered: {} ({})".format(str(population_covered), len(population_covered)))
+            _logger.debug("Active paths: {}".format(str(active_path_indices)))
+        else:
+            _logger.info("No solution was found. Status:".format(m.Status))
+
+        results[test_name]["obj_1"].append(len(population_covered))
+        results[test_name]["obj_2"].append(len(charging_airports))
+        results[test_name]["bound"].append(round(bound, 2))
+        results[test_name]["t"].append(round(time_exec, 2))
+        if test_name == "b&c":
+            cols = m.NumVars
+            rows = m.NumConstrs
+            results[test_name]["cols"].append(cols)
+            results[test_name]["rows"].append(rows)
 
 _logger.info("Total execution time for EACN-REG: {:.1f} minutes".format((time.time() - tic) / 60))
+timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+print_report(results, f"EACN-REG_{timestamp}")
 
-df = pd.DataFrame(results)
-
-# Save DataFrame to an HTML file
-html_file = 'test_results.html'
-df.to_html(html_file, index=False)
