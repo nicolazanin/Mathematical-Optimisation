@@ -67,10 +67,12 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
                     candidates_airports = kernel + bucket
                     not_candidates_airports = list(set(attractive_airports) - set(candidates_airports))
                     m, y_vars, phi_vars = model(airports=attractive_airports, paths=attractive_paths,
-                                                    graph=attractive_graph,
-                                                    population_cells_paths=population_cells_paths,
-                                                    destinations_airports_info=destinations_airports_info, tau=tau,
-                                                    mip_gap=mip_gap, epsilon=epsilon, max_run_time=max_run_time)
+                                                graph=attractive_graph,
+                                                population_cells_paths=population_cells_paths,
+                                                destinations_airports_info=destinations_airports_info, tau=tau,
+                                                mip_gap=mip_gap, epsilon=epsilon, max_run_time=max_run_time)
+                    run_time = (time.time() - start_time)
+                    m.setParam('TimeLimit', max_run_time - run_time)
                     population_covered = np.array([population_density[idx] * phi_vars[idx, dest_cell]
                                                    for idx in population_cells_paths for dest_cell in
                                                    dest_airport_info.keys()]).sum()
@@ -109,6 +111,6 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
             m.setObjective(objective_func, GRB.MAXIMIZE)
             m.optimize()
 
-        m.write("EACN_REG_model.lp")
+       # m.write("EACN_REG_model.lp")
 
     return m, time.time() - start_time

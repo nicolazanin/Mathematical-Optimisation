@@ -5,8 +5,7 @@ import time
 
 from utils.init_dataset import (cells_generation, nodes_generation, get_population_cells_near_airports,
                                 get_pop_density, get_nodes_distances, get_grid_dimensions,
-                                get_activation_cost_airports, get_population_cells_near_airports,
-                                get_destinations_airports_info,
+                                get_activation_cost_airports, get_destinations_airports_info,
                                 get_population_cells2airports_distances)
 from utils.preprocessing import (get_threshold_graph, get_attractive_paths_from_rft, get_all_paths_to_destinations,
                                  get_population_cells_paths, get_population_cells_too_close_to_destination_cells,
