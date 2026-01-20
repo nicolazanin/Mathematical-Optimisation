@@ -34,7 +34,7 @@ for i in range(10):
     results["tau"].append(settings.aircraft_config.tau)
     destination_airports = []
     while len(destination_airports) == 0:
-        settings.random_seed = np.random.randint(1, 10000)
+        settings.random_seed = i
         _logger.info("-------------- Initialize the population grid dataset --------------")
         population_coords = cells_generation(num_cells_x=settings.population_config.cells_x,
                                              num_cells_y=settings.population_config.cells_y,

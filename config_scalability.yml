@@ -8,7 +8,7 @@ population_config:
   destination_cells: [55]
 
 airports_config:
-  num: 40
+  num: 50
   min_distance: 50 # km
   min_cost: 1
   max_cost: 1
@@ -32,11 +32,11 @@ paths_config:
 
 model_config:
   epsilon: 30 # small positive number to define big-M parameters
-  mu_1: 0 # weight of first objective function
-  mu_2: 0 # weight of first objective function
+  mu_1: 1 # weight of first objective function
+  mu_2: 1 # weight of first objective function
   lexicographic: True # true if the model combines the two objective functions in a lexicographic order
   mip_gap: 0.000 # MIP gap termination condition value
-  max_run_time: 300 # model maximum run time in seconds
+  max_run_time: 10000 # model maximum run time in seconds
 
 heuristic_config:
   enable: False # true if the kernel search heuristic is enabled.
