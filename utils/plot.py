@@ -12,9 +12,9 @@ def get_population_heatmap(population_coords: np.ndarray, population_density: np
 
     Args:
         population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
-        of population cell centers.
+            of population cell centers.
         population_density (np.ndarray): A NumPy array of population density values (integers) with the same length as
-        `population_coords`.
+            `population_coords`.
 
     Returns:
         go.Heatmap: A Heatmap object that represents the population density.
@@ -71,7 +71,7 @@ def get_population_cells(population_coords: np.ndarray) -> go.Scatter:
 
     Args:
         population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
-        of population cell centers.
+            of population cell centers.
 
     Returns:
         go.Scatter: A Scatter object that shows the population cells.
@@ -100,7 +100,7 @@ def get_destination_cells(population_coords: np.ndarray, destination_cells: list
 
     Args:
         population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
-        of population cell centers.
+            of population cell centers.
         destination_cells (list): An array of destination cell indices.
 
     Returns:
@@ -137,7 +137,7 @@ def get_ground_dist_destination_cells(population_coords: np.ndarray, destination
 
     Args:
         population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
-        of population cell centers.
+            of population cell centers.
         destination_cells (list): An array of destination cell indices.
         max_ground_distance (float): Maximum allowed ground distance to consider a population cell "near" an airport.
 
@@ -177,7 +177,7 @@ def get_population_grid(population_coords: np.ndarray) -> list[dict]:
 
     Args:
         population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
-        of population cell centers.
+            of population cell centers.
 
     Returns:
         list: A list of dictionaries (shapes) representing the rectangular shapes of the population grid.
@@ -211,7 +211,7 @@ def get_airports(airports_coords: np.ndarray) -> go.Scatter:
 
     Args:
         airports_coords (np.ndarray): A NumPy array of shape (num_airports, 2) containing (x, y) coordinates of each
-        airport.
+            airport.
 
     Returns:
         go.Scatter: A Scatter that shows the airport nodes.
@@ -247,7 +247,7 @@ def get_airport_icons(airports_coords: np.ndarray) -> go.Scatter:
 
     Args:
         airports_coords (np.ndarray): A NumPy array of shape (num_airports, 2) containing (x, y) coordinates of each
-        airport.
+            airport.
 
     Returns:
         go.Scatter: A Scatter that shows the airport nodes through emoji.
@@ -277,7 +277,7 @@ def get_charging_airports(airports_coords: np.ndarray, charging_airports: list) 
 
     Args:
         airports_coords (np.ndarray): A NumPy array of shape (num_airports, 2) containing (x, y) coordinates of each
-        airport.
+            airport.
         charging_airports (list): A list of airports indices representing the charging bases.
 
     Returns:
@@ -313,7 +313,7 @@ def get_charging_airport_icons(airports_coords: np.ndarray, charging_airports: l
 
     Args:
         airports_coords (np.ndarray): A NumPy array of shape (num_airports, 2) containing (x, y) coordinates of each
-        airport.
+            airport.
         charging_airports (list): A list of airports indices representing the bases.
 
     Returns:
@@ -345,7 +345,7 @@ def get_destination_airports(airports_coords: np.ndarray, destination_airports: 
 
     Args:
         airports_coords (np.ndarray): A NumPy array of shape (num_airports, 2) containing (x, y) coordinates of each
-        airport.
+            airport.
         destination_airports (np.ndarray): A NumPy array of destination airports indices close to the destination cells.
 
     Returns:
@@ -385,9 +385,9 @@ def get_connections(airports_coords: np.ndarray, airport_distances: dict, graph:
 
     Args:
         airports_coords (np.ndarray): A NumPy array of shape (num_airports, 2) containing (x, y) coordinates of each
-        airport.
-        airport_distances (dict): A dictionary where each key is a tuple (i, j) representing a pair of node indices, 7
-        and the value is the Euclidean distance between node i and node j.
+            airport.
+        airport_distances (dict): A dictionary where each key is a tuple (i, j) representing a pair of node indices,and
+            the value is the Euclidean distance between node i and node j.
         graph (nx.Graph): A NetworkX graph.
         above (bool): If the connections to represent are above or below tau.
 
@@ -451,7 +451,7 @@ def get_paths(airports_coords: np.ndarray, paths: np.ndarray, attractive: bool =
 
     Args:
         airports_coords (np.ndarray): A NumPy array of shape (num_airports, 2) containing (x, y) coordinates of each
-        airport.
+            airport.
         paths (np.ndarray): A NumPy array of paths (each path is a list of node IDs).
         attractive (bool): If the paths to represent are the attractive paths or all the paths.
 
@@ -488,20 +488,20 @@ def get_paths(airports_coords: np.ndarray, paths: np.ndarray, attractive: bool =
     return paths_lines
 
 
-def get_paths_origins_population_cells(population_coords: np.ndarray, population_cells_paths: dict) -> list[go.Scatter]:
+def get_paths_population_cells(population_coords: np.ndarray, population_cells_paths: dict) -> list[go.Scatter]:
     """
     Returns a list of Scatter objects, each representing the population cells near the origin (an airport node) of each
     path.
 
     Args:
         population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
-        of population cell centers.
+            of population cell centers.
         population_cells_paths (dict): A dictionary mapping each population cell index to a list of paths (each path is
-        a list of node IDs) starting from an airport near that population cell.
+            a list of node IDs) starting from an airport near that population cell.
 
     Returns:
         list: A list of Scatter objects, each representing the population cells near the origin (an airport node) of
-        each path.
+            each path.
     """
     paths_origins_population_cells = []
     added_paths = []
@@ -544,7 +544,7 @@ def get_ground_dist_paths_origins_airports(airports_coords: np.ndarray, paths: n
 
     Args:
         airports_coords (np.ndarray): A NumPy array of shape (num_airports, 2) containing (x, y) coordinates of each
-        airport.
+            airport.
         paths (np.ndarray): A NumPy array of paths (each path is a list of node IDs).
         max_ground_distance (float): Maximum allowed ground distance to consider a population cell "near" an airport.
 
@@ -582,19 +582,19 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
                  airport_distances: dict, graph_below_tau: nx.Graph, graph_above_tau: nx.Graph,
                  destination_airports: np.ndarray, destination_cells: list, max_ground_distance: float,
                  all_paths: np.ndarray, attractive_paths: np.ndarray, population_cells_paths: dict,
-                 charging_airports: list, active_path_indices: np.ndarray, ) -> None:
+                 charging_airports: list, active_path_indices: np.ndarray, simple_plot_enable: bool) -> None:
     """
     Main function to plot the full dataset.
 
     Args:
         population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
-        of population cell centers.
+            of population cell centers.
         population_density (np.ndarray): A NumPy array of population density values (integers) with the same length as
-        `population_coords`.
+            `population_coords`.
         airports_coords (np.ndarray): A NumPy array of shape (num_airports, 2) containing (x, y) coordinates of each
-        airport.
+            airport.
         airport_distances (dict): A dictionary where each key is a tuple (i, j) representing a pair of node indices, 7
-        and the value is the Euclidean distance between node i and node j.
+            and the value is the Euclidean distance between node i and node j.
         graph_below_tau (nx.Graph): A NetworkX graph containing the edges below the distance threshold tau.
         graph_above_tau (nx.Graph): A NetworkX graph containing the edges above the distance threshold tau.
         destination_airports (np.ndarray): A NumPy array of destination airports indices close to the destination cells.
@@ -603,11 +603,10 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
         all_paths (np.ndarray): A NumPy array of all paths (each path is a list of node IDs).
         attractive_paths (np.ndarray):  A NumPy array of attractive paths (each path is a list of node IDs).
         population_cells_paths (dict):  A dictionary mapping each population cell index to a list of paths (each path is
-        a list of node IDs) starting from an airport near that population cell.
-        charging_airports (list): A list of airports indices representing the bases.
+            a list of node IDs) starting from an airport near that population cell.
+        charging_airports (list): A list of airports indices representing the charging bases.
         active_path_indices (np.ndarray): A NumPy array of active paths indices.
-        distance from the first destination cell and not on the maximum ground distance (no need to plot max ground
-        distance from destination cells)
+        simple_plot_enable (bool): True to plot minimum information.
 
     Return:
         none
@@ -632,38 +631,37 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
                                                                      max_ground_distance=max_ground_distance)
     fig.add_traces(round_dist_destination_cells)
 
-    connections_above_tau = get_connections(airports_coords=airports_coords, airport_distances=airport_distances,
-                                            graph=graph_above_tau)
-    fig.add_traces(connections_above_tau)
+    if not simple_plot_enable:
+        connections_above_tau = get_connections(airports_coords=airports_coords, airport_distances=airport_distances,
+                                                graph=graph_above_tau)
+        fig.add_traces(connections_above_tau)
 
-    connections_below_tau = get_connections(airports_coords=airports_coords, airport_distances=airport_distances,
-                                            graph=graph_below_tau, above=False)
-    fig.add_traces(connections_below_tau)
+        connections_below_tau = get_connections(airports_coords=airports_coords, airport_distances=airport_distances,
+                                                graph=graph_below_tau, above=False)
+        fig.add_traces(connections_below_tau)
 
-    paths = get_paths(airports_coords=airports_coords, paths=all_paths[:50], attractive=False)
-    fig.add_traces(paths)
+        paths = get_paths(airports_coords=airports_coords, paths=all_paths, attractive=False)
+        fig.add_traces(paths)
 
     active = [len(fig.data) + i for i in active_path_indices]
     paths = get_paths(airports_coords=airports_coords, paths=attractive_paths)
     fig.add_traces(paths)
 
-    path_origins_population_cells = get_paths_origins_population_cells(population_coords=population_coords,
-                                                                       population_cells_paths=population_cells_paths)
-    if len(path_origins_population_cells) is not 0:
-        new_legend_group = path_origins_population_cells[0].legendgroup
-        new_path_index = 0
-        for i, path in enumerate(path_origins_population_cells):
-            if new_legend_group != path.legendgroup:
-                new_path_index += 1
-                new_legend_group = path.legendgroup
-            if new_path_index in active_path_indices:
-                active.append(len(fig.data) + i)
+    path_origins_population_cells = get_paths_population_cells(population_coords=population_coords,
+                                                               population_cells_paths=population_cells_paths)
+    active_legend_group = [path.legendgroup for path in paths]
+
+    for i, cell in enumerate(path_origins_population_cells):
+        if cell.legendgroup in active_legend_group:
+            active.append(len(fig.data) + i)
+
     fig.add_traces(path_origins_population_cells)
 
-    ground_dist_paths_origins_airports = get_ground_dist_paths_origins_airports(airports_coords=airports_coords,
-                                                                                paths=attractive_paths,
-                                                                                max_ground_distance=max_ground_distance)
-    fig.add_traces(ground_dist_paths_origins_airports)
+    if not simple_plot_enable:
+        ground_dist_paths_origins_airports = (
+            get_ground_dist_paths_origins_airports(airports_coords=airports_coords, paths=attractive_paths,
+                                                   max_ground_distance=max_ground_distance))
+        fig.add_traces(ground_dist_paths_origins_airports)
 
     charging_airport_icons = get_charging_airport_icons(airports_coords=airports_coords,
                                                         charging_airports=charging_airports)
@@ -737,7 +735,7 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
         ),
         legend3=dict(
             title=dict(
-                text="Paths (first 50):",
+                text="Paths:",
                 font=dict(
                     size=13,
                     weight="bold"

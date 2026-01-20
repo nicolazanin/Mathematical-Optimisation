@@ -94,6 +94,7 @@ class Settings:
     logging_lvl: int
     print_logs: bool
     plot: bool
+    simple_plot_enable: bool
 
     @classmethod
     def from_yaml(cls, path: str) -> "Settings":

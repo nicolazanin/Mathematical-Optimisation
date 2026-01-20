@@ -130,6 +130,6 @@ else:
                  max_ground_distance=max_ground_distance, all_paths=all_paths,
                  attractive_paths=attractive_paths,
                  population_cells_paths=population_cells_paths, charging_airports=charging_airports,
-                 active_path_indices=active_path_indices)
+                 active_path_indices=active_path_indices, simple_plot_enable=settings.simple_plot_enable,)
 
 _logger.info("Total execution time for EACN-REG: {:.1f} minutes".format((time.time() - tic) / 60))

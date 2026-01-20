@@ -38,7 +38,7 @@ def get_pop_density(population_coords: np.ndarray, high_population_cells: list, 
 
     Args:
         population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
-        of population cell centers.
+            of population cell centers.
         high_population_cells (list): An array of destination cell indices to simulate high population density.
         min_density (int, optional): Minimum population density value.
         max_density (int, optional): Maximum population density value.
@@ -148,7 +148,7 @@ def get_nodes_distances(nodes_coords: np.ndarray) -> dict:
 
     Returns:
         dict: A dictionary where each key is a tuple (i, j) representing a pair of node indices, and the value is the
-        Euclidean distance between node i and node j.
+            Euclidean distance between node i and node j.
     """
     distances = {}
     num_nodes = len(nodes_coords)

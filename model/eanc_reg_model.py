@@ -82,7 +82,7 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
                         m.addConstr(y_vars[not_candidates_airport] == 0)
                     m.optimize()
                     if m.Status == GRB.OPTIMAL: # NOT: TIME_LIMIT, GRB.INFEASIBLE, GRB.UNBOUNDED
-                        charging_airports, active_path_indices, solutions = get_outputs_from_model(m)
+                        charging_airports, population_covered, active_path_indices, _ = get_outputs_from_model(m)
                         kernel = kernel + [charging_airport for charging_airport in charging_airports
                                            if charging_airport not in kernel]
                         best_obj_val = m.ObjVal

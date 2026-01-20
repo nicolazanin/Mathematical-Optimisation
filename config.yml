@@ -48,3 +48,4 @@ random_seed: 559
 logging_lvl: 10 # 10: debug; 20: info
 print_logs: False
 plot: True
+simple_plot_enable: True # true to plot minimum information
