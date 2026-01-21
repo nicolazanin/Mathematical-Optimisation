@@ -475,7 +475,7 @@ def get_paths(airports_coords: np.ndarray, paths: np.ndarray, attractive: bool =
         paths_lines.append(go.Scatter(
             x=x, y=y,
             mode='lines',
-            line=dict(width=4),
+            line=dict(width=3),
             name="Path" if attractive else "Path: " + str(path),
             legendgroup="Path: " + str(path) if attractive else None,
             legendgrouptitle_text="Path: " + str(path) if attractive else None,
