@@ -28,7 +28,7 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int) ->
     _logger.setLevel(settings.logging_lvl)
 
     settings.airports_config.num = num
-    settings.airports_config.tau = tau
+    settings.aircraft_config.tau = tau
     settings.population_config.cells_x = cell_x
     settings.population_config.cells_y = cell_y
     settings.population_config.cell_area = cell_area
