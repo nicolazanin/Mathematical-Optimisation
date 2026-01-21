@@ -40,7 +40,7 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int) ->
     _logger.info("-------------- tau: {} --------------".format(tau))
 
     results = init_results_dict()
-    for i in range(1):
+    for i in range(10):
         results["test"].append(i)
         results["K"].append(settings.population_config.cells_x * settings.population_config.cells_y)
         results["N"].append(settings.airports_config.num)
