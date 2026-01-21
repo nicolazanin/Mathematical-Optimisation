@@ -47,6 +47,6 @@ heuristic_config:
 random_seed: 0
 logging_lvl: 10 # 10: debug; 20: info
 print_logs: True
-plot: False
-simple_plot_enable: False # true to plot minimum information
+show_plot: False
+simple_plot_enable: True # true to plot minimum information
 save_plot: True

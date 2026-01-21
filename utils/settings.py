@@ -93,7 +93,7 @@ class Settings:
     random_seed: int
     logging_lvl: int
     print_logs: bool
-    plot: bool
+    show_plot: bool
     simple_plot_enable: bool
     save_plot: bool
 

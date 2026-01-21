@@ -162,20 +162,20 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int, ro
                 results[test_name]["cols"].append(cols)
                 results[test_name]["rows"].append(rows)
 
-            _logger.info("-------------- Plot --------------")
-            plot_name = "{}_{}_{}_{}_".format(i, settings.airports_config.num,
-                                              settings.population_config.cells_x * settings.population_config.cells_y,
-                                              settings.aircraft_config.tau)
-            plot_dataset(population_coords=population_coords, population_density=population_density,
-                         airports_coords=airports_coords, airport_distances=airports_distances,
-                         graph_below_tau=airports_graph_below_tau, graph_above_tau=airports_graph_above_tau,
-                         destination_airports=destination_airports,
-                         destination_cells=settings.population_config.destination_cells,
-                         max_ground_distance=max_ground_distance, all_paths=all_paths,
-                         attractive_paths=attractive_paths,
-                         population_cells_paths=population_cells_paths, charging_airports=charging_airports,
-                         active_path_indices=active_path_indices, plot_name=plot_name,
-                         simple_plot_enable=settings.simple_plot_enable, save_plot=settings.save_plot)
+                _logger.info("-------------- Plot --------------")
+                plot_name = "{}_{}_{}_{}_".format(i, settings.airports_config.num,
+                                                  settings.population_config.cells_x * settings.population_config.cells_y,
+                                                  settings.aircraft_config.tau)
+                plot_dataset(population_coords=population_coords, population_density=population_density,
+                             airports_coords=airports_coords, airport_distances=airports_distances,
+                             graph_below_tau=airports_graph_below_tau, graph_above_tau=airports_graph_above_tau,
+                             destination_airports=destination_airports,
+                             destination_cells=settings.population_config.destination_cells,
+                             max_ground_distance=max_ground_distance, all_paths=all_paths,
+                             attractive_paths=attractive_paths,
+                             population_cells_paths=population_cells_paths, charging_airports=charging_airports,
+                             active_path_indices=active_path_indices, plot_name=plot_name,
+                             simple_plot_enable=settings.simple_plot_enable, save_plot=settings.save_plot)
 
     _logger.info("Total execution time for EACN-REG: {:.1f} minutes".format((time.time() - tic) / 60))
 
@@ -183,7 +183,7 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int, ro
 
 
 if __name__ == "__main__":
-    scalability(num=50, cell_x=10, cell_y=13, tau=400, cell_area=4500, routing_factor_thr=1.4)
+    scalability(num=50, cell_x=10, cell_y=10, tau=400, cell_area=4500, routing_factor_thr=1.4)
     scalability(num=50, cell_x=10, cell_y=10, tau=600, cell_area=4500, routing_factor_thr=1.2)
     scalability(num=50, cell_x=10, cell_y=10, tau=800, cell_area=4500, routing_factor_thr=1.2)
     scalability(num=50, cell_x=10, cell_y=20, tau=400, cell_area=2250, routing_factor_thr=1.4)

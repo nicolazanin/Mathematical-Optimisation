@@ -116,7 +116,7 @@ if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
 else:
     _logger.info("No solution was found. Status:".format(m.Status))
 
-if not settings.plot:
+if not settings.show_plot:
     _logger.info("Plot skipped")
 else:
     _logger.info("-------------- Plot --------------")
