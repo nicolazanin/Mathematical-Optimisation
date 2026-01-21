@@ -43,7 +43,9 @@ def get_pop_density(population_coords: np.ndarray, high_population_cells: list, 
     Returns:
         np.ndarray: A NumPy array of population density values (integers) with the same length as `population_coords`.
     """
-    _logger.info("Generated random population density for each population grid cell")
+    _logger.info(
+        "Generated random population density for each population grid cell('min_density':{}, 'max_density':{})".format(
+            min_density, max_density))
     if min_density == max_density:
         return np.array([min_density for _ in range(len(population_coords))])
     else:
