@@ -95,6 +95,7 @@ class Settings:
     print_logs: bool
     plot: bool
     simple_plot_enable: bool
+    save_plot: bool
 
     @classmethod
     def from_yaml(cls, path: str) -> "Settings":

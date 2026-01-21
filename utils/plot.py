@@ -2,6 +2,7 @@ import plotly.graph_objects as go
 import numpy as np
 import networkx as nx
 import plotly.io as pio
+import datetime
 
 pio.renderers.default = "browser"
 
@@ -582,7 +583,8 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
                  airport_distances: dict, graph_below_tau: nx.Graph, graph_above_tau: nx.Graph,
                  destination_airports: np.ndarray, destination_cells: list, max_ground_distance: float,
                  all_paths: np.ndarray, attractive_paths: np.ndarray, population_cells_paths: dict,
-                 charging_airports: list, active_path_indices: np.ndarray, simple_plot_enable: bool) -> None:
+                 charging_airports: list, active_path_indices: np.ndarray, plot_name: str, simple_plot_enable: bool,
+                 save_plot: bool) -> None:
     """
     Main function to plot the full dataset.
 
@@ -606,7 +608,9 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
             a list of node IDs) starting from an airport near that population cell.
         charging_airports (list): A list of airports indices representing the charging bases.
         active_path_indices (np.ndarray): A NumPy array of active paths indices.
+        plot_name (str): A string name for the plot.
         simple_plot_enable (bool): True to plot minimum information.
+        save_plot (bool): Save plot in a html file.
 
     Return:
         none
@@ -643,8 +647,15 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
         paths = get_paths(airports_coords=airports_coords, paths=all_paths, attractive=False)
         fig.add_traces(paths)
 
-    active = [len(fig.data) + i for i in active_path_indices]
-    paths = get_paths(airports_coords=airports_coords, paths=attractive_paths)
+    paths = get_paths(airports_coords=airports_coords,
+                      paths=np.array([path for i, path in enumerate(attractive_paths)
+                                      if i not in list(active_path_indices)], dtype=object))
+    fig.add_traces(paths)
+
+    active = [len(fig.data) + i for i in range(len(active_path_indices))]
+    paths = get_paths(airports_coords=airports_coords,
+                      paths=np.array([path for i, path in enumerate(attractive_paths)
+                                      if i in list(active_path_indices)], dtype=object))
     fig.add_traces(paths)
 
     path_origins_population_cells = get_paths_population_cells(population_coords=population_coords,
@@ -699,7 +710,7 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
             yanchor="top",
             xref="paper",
             subtitle=dict(
-                text="Electric aircraft charging network design for regional routes",
+                text="Electric aircraft charging network design for regional routes {}".format(plot_name),
                 font=dict(
                     size=13,
                 ),
@@ -863,7 +874,10 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
         ]
     )
     fig.layout.plot_bgcolor = 'rgb(250, 245, 250)'
-    fig.show()
+    if save_plot:
+        fig.write_html("{}_{}.html".format(plot_name, datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")))
+    else:
+        fig.show()
 
 
 def get_visibility(indices, visibility, status) -> list:

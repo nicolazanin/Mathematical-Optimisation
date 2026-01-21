@@ -120,6 +120,9 @@ if not settings.plot:
     _logger.info("Plot skipped")
 else:
     _logger.info("-------------- Plot --------------")
+    plot_name = "test_{}_{}_{}_".format(settings.airports_config.num,
+                                        settings.population_config.cells_x * settings.population_config.cells_y,
+                                        settings.aircraft_config.tau)
     plot_dataset(population_coords=population_coords, population_density=population_density,
                  airports_coords=airports_coords, airport_distances=airports_distances,
                  graph_below_tau=airports_graph_below_tau, graph_above_tau=airports_graph_above_tau,
@@ -128,6 +131,7 @@ else:
                  max_ground_distance=max_ground_distance, all_paths=all_paths,
                  attractive_paths=attractive_paths,
                  population_cells_paths=population_cells_paths, charging_airports=charging_airports,
-                 active_path_indices=active_path_indices, simple_plot_enable=settings.simple_plot_enable,)
+                 active_path_indices=active_path_indices, plot_name=plot_name,
+                 simple_plot_enable=settings.simple_plot_enable, save_plot=settings.save_plot)
 
 _logger.info("Total execution time for EACN-REG: {:.1f} minutes".format((time.time() - tic) / 60))

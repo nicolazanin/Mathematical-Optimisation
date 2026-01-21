@@ -49,3 +49,4 @@ logging_lvl: 10 # 10: debug; 20: info
 print_logs: True
 plot: False
 simple_plot_enable: False # true to plot minimum information
+save_plot: True
