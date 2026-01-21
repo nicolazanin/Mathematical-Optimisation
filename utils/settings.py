@@ -125,40 +125,39 @@ def setup_logging(log_prefix: str, print_file: bool = True) -> None:
         None
     """
 
-    _log_file_name = "{}_{}.txt".format(log_prefix, datetime.datetime.now().
-                                                 strftime("%Y-%m-%d_%H-%M-%S").replace(":", "-").replace(" ", "-"))
-    _log_format = '%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s'
-    _console_date_format = '%H:%M:%S'
-    _file_date_format = _console_date_format
+    log_file_name = "{}_{}.txt".format(
+        log_prefix,
+        datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    )
 
-    console_formatter = logging.Formatter(_log_format, _console_date_format)
-    console_formatter.converter = time.gmtime
-    file_formatter = logging.Formatter(_log_format, _file_date_format)
-    file_formatter.converter = time.gmtime
+    log_format = '%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s'
+    date_format = '%H:%M:%S'
 
     root = logging.getLogger()
     root.setLevel(settings.logging_lvl)
 
-    if len(root.handlers) != 0:
-        console_handler = root.handlers[0]
-    else:
-        console_handler = logging.StreamHandler(sys.stderr)
+    for handler in root.handlers[:]:
+        handler.close()
+        root.removeHandler(handler)
 
-    file_handler = logging.FileHandler(_log_file_name, mode='a', delay=True)
+    console_formatter = logging.Formatter(log_format, date_format)
+    console_formatter.converter = time.gmtime
 
+    console_handler = logging.StreamHandler(sys.stderr)
     console_handler.setLevel(settings.logging_lvl)
     console_handler.setFormatter(console_formatter)
-
-    file_handler.setLevel(settings.logging_lvl)
-    file_handler.setFormatter(file_formatter)
-
     root.addHandler(console_handler)
 
     if print_file:
+        file_formatter = logging.Formatter(log_format, date_format)
+        file_formatter.converter = time.gmtime
+
+        file_handler = logging.FileHandler(log_file_name, mode='a', delay=True)
+        file_handler.setLevel(settings.logging_lvl)
+        file_handler.setFormatter(file_formatter)
         root.addHandler(file_handler)
 
-    root.info("Python version %s" % sys.version)
-
+    root.info("Python version %s", sys.version)
 
 
 settings = Settings.from_yaml("config.yml")
