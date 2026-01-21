@@ -3,14 +3,22 @@ from utils.settings import Settings
 import yaml
 
 
-def apply_preset(settings_to_mod: Settings, presets_path: str, preset_name: str) -> None:
+def apply_preset(settings_to_mod: Settings, presets_path: str, test_name: str) -> None:
     """
-    Loads presets from a YAML and modifies the Settings object in-place.
+    Loads specific configuration presets from a YAML file and updates the Settings object to perform scalability tests.
+
+    Args:
+        settings_to_mod (Settings): The settings object to be modified.
+        presets_path (str): The file path to the YAML containing the presets for scalability tests.
+        test_name (str): The specific test name key in the YAML file to extract settings from.
+
+    Returns:
+        None
     """
     with open(presets_path, "r") as f:
         all_presets = yaml.safe_load(f)
 
-    preset = all_presets[preset_name]
+    preset = all_presets[test_name]
     settings_to_mod.model_config.mu_1 = preset["mu_1"]
     settings_to_mod.model_config.mu_2 = preset["mu_2"]
     settings_to_mod.model_config.lexicographic = preset["lexicographic"]
@@ -19,7 +27,13 @@ def apply_preset(settings_to_mod: Settings, presets_path: str, preset_name: str)
     settings_to_mod.heuristic_config.iterations = preset["iterations"]
 
 
-def init_results_dict():
+def init_results_dict() -> dict:
+    """
+    Initializes a structured dictionary to store experimental results.
+
+    Returns:
+        dict: A dictionary structure ready to be populated with metric data.
+    """
     results = {
         "test": [], "N": [], "K": [], "tau": [],
         "b&c": {"rows": [], "cols": [], "obj_1": [], "obj_2": [], "bound": [], "t": []},
@@ -29,7 +43,16 @@ def init_results_dict():
     return results
 
 
-def flatten_results(results):
+def flatten_results(results: dict) -> dict:
+    """
+    Flattens a nested results dictionary into a single-level format.
+
+    Args:
+        results (dict): The nested dictionary containing experimental metrics.
+
+    Returns:
+        dict: A flattened dictionary where each key corresponds to a unique data column.
+    """
     # Flatten nested dictionaries into separate columns
     flattened = {key: [] for key in results if not isinstance(results[key], dict)}
 
@@ -46,6 +69,16 @@ def flatten_results(results):
 
 
 def print_report(results, name: str) -> None:
+    """
+    Converts the results dictionary to a Pandas DataFrame and exports it to CSV.
+
+    Args:
+        results (dict): The (potentially nested) dictionary of results.
+        name (str): The base filename for the output (the .csv extension is added).
+
+    Returns:
+        None
+    """
     flattened_results = flatten_results(results)
     df = pd.DataFrame(flattened_results)
     file_name = f"{name}.csv"

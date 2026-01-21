@@ -130,8 +130,8 @@ def setup_logging(log_prefix: str, print_file: bool = True) -> None:
     if _is_setup_done:
         pass
     else:
-        _log_file_name = "{}-{}_log_file.txt".format(log_prefix, datetime.datetime.utcnow().
-                                                     strftime("%H:%M:%S").replace(":", "-").replace(" ", "-"))
+        _log_file_name = "{}_{}.txt".format(log_prefix, datetime.datetime.now().
+                                                     strftime("%Y-%m-%d_%H-%M-%S").replace(":", "-").replace(" ", "-"))
         _log_format = '%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s'
         _console_date_format = '%H:%M:%S'
         _file_date_format = _console_date_format
