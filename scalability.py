@@ -49,6 +49,7 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int, ro
         results["N"].append(settings.airports_config.num)
         results["tau"].append(settings.aircraft_config.tau)
         settings.random_seed = i
+        np.random.seed(settings.random_seed)
         settings.population_config.destination_cells = [int(
             str(np.random.randint(settings.population_config.cells_y * 0.2, settings.population_config.cells_y * 0.8)) +
             str(np.random.randint(settings.population_config.cells_x * 0.2, settings.population_config.cells_x * 0.8)))]
