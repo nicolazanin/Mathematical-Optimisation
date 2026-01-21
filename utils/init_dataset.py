@@ -1,10 +1,7 @@
 import numpy as np
 import logging
-from utils.settings import settings
 
 _logger = logging.getLogger(__name__)
-
-np.random.seed(settings.random_seed)
 
 
 def cells_generation(num_cells_x: int, num_cells_y: int, cell_area: float) -> np.ndarray:

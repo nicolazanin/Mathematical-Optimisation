@@ -18,8 +18,7 @@ from utils.scalability_utils import apply_preset, init_results_dict, print_repor
 
 settings = settings.from_yaml("config_scalability.yml")
 
-
-def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int) -> None:
+def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int, routing_factor_thr: float) -> None:
     tic = time.time()
 
     setup_logging(log_prefix="EACN_REG", print_file=settings.print_logs)
@@ -32,12 +31,14 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int) ->
     settings.population_config.cells_x = cell_x
     settings.population_config.cells_y = cell_y
     settings.population_config.cell_area = cell_area
+    settings.paths_config.routing_factor_thr = routing_factor_thr
 
     _logger.info("-------------- EACN-REG scalability starting --------------")
-    _logger.info("-------------- N: {} --------------".format(num))
-    _logger.info("-------------- K: {} --------------".format(
-        settings.population_config.cells_x * settings.population_config.cells_y))
-    _logger.info("-------------- tau: {} --------------".format(tau))
+    _logger.info("-------------- N: {} --------------".format(settings.airports_config.num))
+    _logger.info("-------------- K: {} --------------".format(settings.population_config.cells_x *
+                                                              settings.population_config.cells_y))
+    _logger.info("-------------- tau: {} --------------".format(settings.aircraft_config.tau))
+    _logger.info("-------------- routing_factor: {} --------------".format(settings.paths_config.routing_factor_thr))
 
     results = init_results_dict()
     for i in range(10):
@@ -45,48 +46,50 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int) ->
         results["K"].append(settings.population_config.cells_x * settings.population_config.cells_y)
         results["N"].append(settings.airports_config.num)
         results["tau"].append(settings.aircraft_config.tau)
-        destination_airports = []
-        while len(destination_airports) == 0:
-            settings.random_seed = i
-            _logger.info("-------------- Initialize the population grid dataset --------------")
-            population_coords = cells_generation(num_cells_x=settings.population_config.cells_x,
-                                                 num_cells_y=settings.population_config.cells_y,
-                                                 cell_area=settings.population_config.cell_area)
-            population_density = get_pop_density(population_coords=population_coords,
-                                                 min_density=settings.population_config.min_density,
-                                                 max_density=settings.population_config.max_density,
-                                                 high_population_cells=settings.population_config.high_population_cells)
+        settings.random_seed = i
+        settings.population_config.destination_cells = [int(
+            str(np.random.randint(settings.population_config.cells_y * 0.2, settings.population_config.cells_y * 0.8)) +
+            str(np.random.randint(settings.population_config.cells_x * 0.2, settings.population_config.cells_x * 0.8)))]
 
-            _logger.info("-------------- Initialize the airports dataset --------------")
-            total_width_pop_area, total_height_pop_area = get_grid_dimensions(
-                num_cells_x=settings.population_config.cells_x,
-                num_cells_y=settings.population_config.cells_y,
-                cell_area=settings.population_config.cell_area)
-            airports_coords = nodes_generation(num_nodes=settings.airports_config.num,
-                                               total_width=total_width_pop_area,
-                                               total_height=total_height_pop_area,
-                                               additional_nodes=settings.airports_config.additional_airport_coords,
-                                               min_distance_km=settings.airports_config.min_distance)
-            activation_costs = get_activation_cost_airports(num_airports=np.size(airports_coords),
-                                                            max_cost=settings.airports_config.max_cost,
-                                                            min_cost=settings.airports_config.min_cost)
-            airports_distances = get_nodes_distances(nodes_coords=airports_coords)
-            _logger.info("-------------- Define Destination Airport/s --------------")
-            max_ground_distance = settings.ground_access_config.avg_speed * settings.ground_access_config.max_time / 60
-            population_cells_near_airports = get_population_cells_near_airports(airports_coords=airports_coords,
-                                                                                population_coords=population_coords,
-                                                                                max_ground_distance=max_ground_distance)
+        _logger.info("-------------- Initialize the population grid dataset --------------")
+        population_coords = cells_generation(num_cells_x=settings.population_config.cells_x,
+                                             num_cells_y=settings.population_config.cells_y,
+                                             cell_area=settings.population_config.cell_area)
+        population_density = get_pop_density(population_coords=population_coords,
+                                             min_density=settings.population_config.min_density,
+                                             max_density=settings.population_config.max_density,
+                                             high_population_cells=settings.population_config.high_population_cells)
 
-            population_cells2airport_distances = get_population_cells2airports_distances(
-                population_coords=population_coords,
-                airports_coords=airports_coords)
+        _logger.info("-------------- Initialize the airports dataset --------------")
+        total_width_pop_area, total_height_pop_area = get_grid_dimensions(
+            num_cells_x=settings.population_config.cells_x,
+            num_cells_y=settings.population_config.cells_y,
+            cell_area=settings.population_config.cell_area)
+        airports_coords = nodes_generation(num_nodes=settings.airports_config.num,
+                                           total_width=total_width_pop_area,
+                                           total_height=total_height_pop_area,
+                                           additional_nodes=settings.airports_config.additional_airport_coords,
+                                           min_distance_km=settings.airports_config.min_distance)
+        activation_costs = get_activation_cost_airports(num_airports=np.size(airports_coords),
+                                                        max_cost=settings.airports_config.max_cost,
+                                                        min_cost=settings.airports_config.min_cost)
+        airports_distances = get_nodes_distances(nodes_coords=airports_coords)
+        _logger.info("-------------- Define Destination Airport/s --------------")
+        max_ground_distance = settings.ground_access_config.avg_speed * settings.ground_access_config.max_time / 60
+        population_cells_near_airports = get_population_cells_near_airports(airports_coords=airports_coords,
+                                                                            population_coords=population_coords,
+                                                                            max_ground_distance=max_ground_distance)
 
-            destinations_airports_info = get_destinations_airports_info(
-                destination_cells=settings.population_config.destination_cells,
-                population_airport_distances=population_cells2airport_distances,
-                max_ground_distance=max_ground_distance)
-            destination_airports = np.array([destination_airport_prop[1] for destination_airport_prop in
-                                             destinations_airports_info if destination_airport_prop[1] is not None])
+        population_cells2airport_distances = get_population_cells2airports_distances(
+            population_coords=population_coords,
+            airports_coords=airports_coords)
+
+        destinations_airports_info = get_destinations_airports_info(
+            destination_cells=settings.population_config.destination_cells,
+            population_airport_distances=population_cells2airport_distances,
+            max_ground_distance=max_ground_distance)
+        destination_airports = np.array([destination_airport_prop[1] for destination_airport_prop in
+                                         destinations_airports_info if destination_airport_prop[1] is not None])
 
         _logger.info("------------- Pre-Processing --------------")
         # Create two graph to identify the edges above and below the distance threshold tau (single charge range)
@@ -163,10 +166,9 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int) ->
 
 
 if __name__ == "__main__":
-    scalability(num=50, cell_x=10, cell_y=10, tau=400, cell_area=4500)
-    scalability(num=50, cell_x=10, cell_y=10, tau=600, cell_area=4500)
-    scalability(num=50, cell_x=10, cell_y=10, tau=800, cell_area=4500)
-    scalability(num=50, cell_x=10, cell_y=20, tau=400, cell_area=2250)
-    scalability(num=50, cell_x=10, cell_y=20, tau=600, cell_area=2250)
-    scalability(num=50, cell_x=10, cell_y=20, tau=800, cell_area=2250)
-
+    scalability(num=50, cell_x=10, cell_y=13, tau=400, cell_area=4500, routing_factor_thr=1.4)
+    scalability(num=50, cell_x=10, cell_y=10, tau=600, cell_area=4500, routing_factor_thr=1.2)
+    scalability(num=50, cell_x=10, cell_y=10, tau=800, cell_area=4500, routing_factor_thr=1.2)
+    scalability(num=50, cell_x=10, cell_y=20, tau=400, cell_area=2250, routing_factor_thr=1.4)
+    scalability(num=50, cell_x=10, cell_y=20, tau=600, cell_area=2250, routing_factor_thr=1.2)
+    scalability(num=50, cell_x=10, cell_y=20, tau=800, cell_area=2250, routing_factor_thr=1.2)

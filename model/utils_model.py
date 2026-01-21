@@ -31,6 +31,7 @@ def model(airports: list, paths: np.ndarray, graph: nx.Graph, population_cells_p
     m.setParam('LogToConsole', 0)
     m.setParam('MIPGap', mip_gap)
     m.setParam('TimeLimit', max_run_time)
+    m.setParam('Threads', 4)
     m1_vals, m2_vals, m3_vals = get_tight_big_m(graph=graph, tau=tau, epsilon=epsilon)
     y = m.addVars([i for i in airports], vtype=GRB.BINARY, name="y")
     rho = m.addVars([i for i in airports], vtype=GRB.CONTINUOUS, name="rho", lb=0.0)

@@ -22,7 +22,7 @@ _logger = logging.getLogger(__name__)
 _logger.setLevel(settings.logging_lvl)
 
 _logger.info("-------------- EACN-REG test starting --------------")
-
+np.random.seed(settings.random_seed)
 _logger.info("-------------- Initialize the population grid dataset --------------")
 population_coords = cells_generation(num_cells_x=settings.population_config.cells_x,
                                      num_cells_y=settings.population_config.cells_y,

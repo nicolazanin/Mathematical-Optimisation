@@ -5,7 +5,7 @@ population_config:
   min_density: 1
   max_density: 1
   high_population_cells: []
-  destination_cells: [55]
+  destination_cells: []
 
 airports_config:
   num: 50
