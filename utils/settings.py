@@ -125,46 +125,40 @@ def setup_logging(log_prefix: str, print_file: bool = True) -> None:
         None
     """
 
-    global _is_setup_done
+    _log_file_name = "{}_{}.txt".format(log_prefix, datetime.datetime.now().
+                                                 strftime("%Y-%m-%d_%H-%M-%S").replace(":", "-").replace(" ", "-"))
+    _log_format = '%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s'
+    _console_date_format = '%H:%M:%S'
+    _file_date_format = _console_date_format
 
-    if _is_setup_done:
-        pass
+    console_formatter = logging.Formatter(_log_format, _console_date_format)
+    console_formatter.converter = time.gmtime
+    file_formatter = logging.Formatter(_log_format, _file_date_format)
+    file_formatter.converter = time.gmtime
+
+    root = logging.getLogger()
+    root.setLevel(settings.logging_lvl)
+
+    if len(root.handlers) != 0:
+        console_handler = root.handlers[0]
     else:
-        _log_file_name = "{}_{}.txt".format(log_prefix, datetime.datetime.now().
-                                                     strftime("%Y-%m-%d_%H-%M-%S").replace(":", "-").replace(" ", "-"))
-        _log_format = '%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s'
-        _console_date_format = '%H:%M:%S'
-        _file_date_format = _console_date_format
+        console_handler = logging.StreamHandler(sys.stderr)
 
-        console_formatter = logging.Formatter(_log_format, _console_date_format)
-        console_formatter.converter = time.gmtime
-        file_formatter = logging.Formatter(_log_format, _file_date_format)
-        file_formatter.converter = time.gmtime
+    file_handler = logging.FileHandler(_log_file_name, mode='a', delay=True)
 
-        root = logging.getLogger()
-        root.setLevel(settings.logging_lvl)
+    console_handler.setLevel(settings.logging_lvl)
+    console_handler.setFormatter(console_formatter)
 
-        if len(root.handlers) != 0:
-            console_handler = root.handlers[0]
-        else:
-            console_handler = logging.StreamHandler(sys.stderr)
+    file_handler.setLevel(settings.logging_lvl)
+    file_handler.setFormatter(file_formatter)
 
-        file_handler = logging.FileHandler(_log_file_name, mode='a', delay=True)
+    root.addHandler(console_handler)
 
-        console_handler.setLevel(settings.logging_lvl)
-        console_handler.setFormatter(console_formatter)
+    if print_file:
+        root.addHandler(file_handler)
 
-        file_handler.setLevel(settings.logging_lvl)
-        file_handler.setFormatter(file_formatter)
+    root.info("Python version %s" % sys.version)
 
-        root.addHandler(console_handler)
-
-        if print_file:
-            root.addHandler(file_handler)
-
-        root.info("Python version %s" % sys.version)
-
-        _is_setup_done = True
 
 
 settings = Settings.from_yaml("config.yml")
