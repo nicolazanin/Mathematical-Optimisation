@@ -70,12 +70,7 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
                                                 graph=attractive_graph,
                                                 population_cells_paths=population_cells_paths,
                                                 destinations_airports_info=destinations_airports_info, tau=tau,
-                                                mip_gap=mip_gap, epsilon=epsilon, max_run_time=max_run_time)
-                    if max_run_time - (time.time() - start_time) > 0:
-                        new_max_run_time = int(max_run_time - (time.time() - start_time))
-                    else:
-                        new_max_run_time = 0
-                    m.setParam('TimeLimit', new_max_run_time)
+                                                mip_gap=mip_gap, epsilon=epsilon, max_run_time=int(max_run_time/10))
                     population_covered = np.array([population_density[idx] * phi_vars[idx, dest_cell]
                                                    for idx in population_cells_paths for dest_cell in
                                                    dest_airport_info.keys()]).sum()
@@ -86,7 +81,7 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
                     for not_candidates_airport in not_candidates_airports:
                         m.addConstr(y_vars[not_candidates_airport] == 0)
                     m.optimize()
-                    if m.Status == GRB.OPTIMAL: # NOT: TIME_LIMIT, GRB.INFEASIBLE, GRB.UNBOUNDED
+                    if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
                         charging_airports, population_covered, active_path_indices, _ = get_outputs_from_model(m)
                         kernel = kernel + [charging_airport for charging_airport in charging_airports
                                            if charging_airport not in kernel]
