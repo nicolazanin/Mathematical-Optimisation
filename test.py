@@ -113,7 +113,6 @@ if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
     charging_airports, population_covered, active_path_indices, bound = get_outputs_from_model(m)
     _logger.info("Charging airports: {} ({})".format(str(charging_airports), len(charging_airports)))
     _logger.info("Population covered: {} ({})".format(str(population_covered), len(population_covered)))
-    _logger.debug("Active paths: {}".format(str(active_path_indices)))
 else:
     _logger.info("No solution was found. Status:".format(m.Status))
 
