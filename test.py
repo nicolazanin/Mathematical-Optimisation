@@ -22,7 +22,14 @@ _logger = logging.getLogger(__name__)
 _logger.setLevel(settings.logging_lvl)
 
 _logger.info("-------------- EACN-REG test starting --------------")
+_logger.info("-------------- N: {} --------------".format(settings.airports_config.num))
+_logger.info("-------------- K: {} --------------".format(settings.population_config.cells_x *
+                                                          settings.population_config.cells_y))
+_logger.info("-------------- tau: {} --------------".format(settings.aircraft_config.tau))
+_logger.info("-------------- routing_factor: {} --------------".format(settings.paths_config.routing_factor_thr))
+
 np.random.seed(settings.random_seed)
+
 _logger.info("-------------- Initialize the population grid dataset --------------")
 population_coords = cells_generation(num_cells_x=settings.population_config.cells_x,
                                      num_cells_y=settings.population_config.cells_y,
