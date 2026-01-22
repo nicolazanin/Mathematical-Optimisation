@@ -199,7 +199,7 @@ def get_population_cells_too_close_to_destination_cells(population_coords: np.nd
         close_cells = np.where(distances[i] < min_distance)[0]
         target_to_close_cells[target_idx] = close_cells
         _logger.info(
-            "For the destination cell {} the following cells {} are closer than the minimum distance of {:.0f}km".format(
+            "For the destination cell {} the following population cells {} are closer than the minimum distance of {:.0f}km".format(
                 target_idx, close_cells, min_distance))
 
     return target_to_close_cells
