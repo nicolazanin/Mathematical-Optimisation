@@ -15,15 +15,6 @@ from utils.plot import plot_dataset
 from model.eanc_reg_model import solve_eacn_model
 from utils.settings import settings, setup_logging
 
-# settings = settings.from_yaml("config_scalability.yml")
-# settings.random_seed = 0
-# settings.airports_config.num = 50
-# settings.aircraft_config.tau = 400
-# settings.population_config.cells_x = 10
-# settings.population_config.cells_y = 10
-# settings.population_config.destination_cells = [int(
-#     str(np.random.randint(settings.population_config.cells_y * 0.2, settings.population_config.cells_y * 0.8)) +
-#     str(np.random.randint(settings.population_config.cells_x * 0.2, settings.population_config.cells_x * 0.8)))]
 tic = time.time()
 
 setup_logging(log_prefix="EACN-REG", print_file=settings.print_logs)
