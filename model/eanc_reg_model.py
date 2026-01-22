@@ -43,7 +43,6 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
     Returns:
         tuple: A tuple containing the model and the optimization solution time
     """
-    m = None
     start_time = time.time()
 
     dest_airport_info = {dest_cell: airport_idx for dest_cell, airport_idx, _ in destinations_airports_info}
@@ -53,33 +52,48 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
         _logger.warning("Kernel search heuristic is enabled but incompatible lexicographic order is selected "
                         "(blending approach is used)")  # blending approach is the linear combination of obt functions
 
+    m, y_vars, phi_vars = model(airports=attractive_airports, paths=attractive_paths, graph=attractive_graph,
+                                population_cells_paths=population_cells_paths,
+                                destinations_airports_info=destinations_airports_info, tau=tau, mip_gap=mip_gap,
+                                epsilon=epsilon, max_run_time=max_run_time)
+
+    population_covered = np.array([population_density[idx] * phi_vars[idx, dest_cell]
+                                   for idx in population_cells_paths for dest_cell in
+                                   dest_airport_info.keys()]).sum()
+    installation_cost = np.array([activation_costs[i] * y_vars[i] for i in attractive_airports]).sum()
+
     if ks:
+        m.setParam('TimeLimit', int(max_run_time/10))
+        objective_expr = mu_1 * population_covered - mu_2 * installation_cost
+        m.setObjective(objective_expr, GRB.MAXIMIZE)
+        best_obj_constr = m.addConstr(objective_expr >= 0, name="best_obj_cut")
+        best_obj_val = 0
+        best_obj_constr.RHS = best_obj_val
+
+        bucket_constrs = {}
+
+        for airport in attractive_airports:
+            c = m.addConstr(y_vars[airport] <= 0, name=f"bucket_fix_{airport}")
+            c.setAttr(GRB.Attr.RHS, 1)
+            bucket_constrs[airport] = c
+
         kernel = get_initial_kernel(population_cells_paths=population_cells_paths,
                                     initial_kernel_size=initial_kernel_size)
         best_obj_val = 0
         _logger.info("-------------- EACN-REG kernel search starting --------------")
         for iteration in range(iterations):
             buckets = get_buckets(airports=attractive_airports, kernel=kernel, bucket_size=buckets_size)
-            if (time.time() - start_time) < max_run_time:
-                for bucket_id, bucket in buckets.items():
+            for bucket_id, bucket in buckets.items():
+                if (time.time() - start_time) < max_run_time:
                     _logger.info("-------------- Kernel search {} iteration, {} bucket--------------".
                                  format(str(iteration + 1), str(bucket_id + 1)))
                     candidates_airports = kernel + bucket
                     not_candidates_airports = list(set(attractive_airports) - set(candidates_airports))
-                    m, y_vars, phi_vars = model(airports=attractive_airports, paths=attractive_paths,
-                                                graph=attractive_graph,
-                                                population_cells_paths=population_cells_paths,
-                                                destinations_airports_info=destinations_airports_info, tau=tau,
-                                                mip_gap=mip_gap, epsilon=epsilon, max_run_time=int(max_run_time/10))
-                    population_covered = np.array([population_density[idx] * phi_vars[idx, dest_cell]
-                                                   for idx in population_cells_paths for dest_cell in
-                                                   dest_airport_info.keys()]).sum()
-                    installation_cost = np.array([activation_costs[i] * y_vars[i] for i in attractive_airports]).sum()
-                    objective_func = (mu_1 * population_covered - mu_2 * installation_cost)
-                    m.setObjective(objective_func, GRB.MAXIMIZE)
-                    m.addConstr(objective_func >= best_obj_val)
-                    for not_candidates_airport in not_candidates_airports:
-                        m.addConstr(y_vars[not_candidates_airport] == 0)
+                    for c in bucket_constrs.values():
+                        c.RHS = 1
+                    for airport in not_candidates_airports:
+                        bucket_constrs[airport].RHS = 0
+                    best_obj_constr.RHS = best_obj_val
                     m.optimize()
                     if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
                         charging_airports, population_covered, active_path_indices, _ = get_outputs_from_model(m)
@@ -87,16 +101,6 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
                                            if charging_airport not in kernel]
                         best_obj_val = m.ObjVal
     else:
-        m, y_vars, phi_vars = model(airports=attractive_airports, paths=attractive_paths, graph=attractive_graph,
-                                    population_cells_paths=population_cells_paths,
-                                    destinations_airports_info=destinations_airports_info, tau=tau, mip_gap=mip_gap,
-                                    epsilon=epsilon, max_run_time=max_run_time)
-
-        population_covered = np.array([population_density[idx] * phi_vars[idx, dest_cell]
-                                       for idx in population_cells_paths for dest_cell in
-                                       dest_airport_info.keys()]).sum()
-        installation_cost = np.array([activation_costs[i] * y_vars[i] for i in attractive_airports]).sum()
-
         if lexicographic:
             m.setObjective(mu_1 * population_covered, GRB.MAXIMIZE)
             m.optimize()
