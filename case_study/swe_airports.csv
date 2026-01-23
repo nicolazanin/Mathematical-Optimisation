@@ -3,7 +3,7 @@ Anderstorp ;ESMP ;;Anderstorp Airport ;Public ;(04/22,1000m,Asphalt);57.264167;1
 Arboga ;ESQO ;;Arboga Airport ;Public ;(15/33,2000m,Asphalt);59.386389;15.923889;
 Arvidsjaur ;ESNX ;AJR ;Arvidsjaur Airport ;Public ;(12/30,2500m,Asphalt);65.590278;19.281944;55355
 Arvika ;ESKV ;;Arvika–Westlanda Airport ;Public ;(01/19,1150m,Asphalt);59.675007;12.639355;
-Borlänge ;ESSD ;BLE ;Borlänge Airport (Dala Airport) ;Public ;(14/32,2310m,Asphalt);60.421944;15515;10375
+Borlänge ;ESSD ;BLE ;Borlänge Airport (Dala Airport) ;Public ;(14/32,2310m,Asphalt);60.421944;15.515;10375
 Borås ;ESGE ;;Viared Airport ;Public ;(04/22,800m,Asphalt);57.696811;12.845863;
 Dala-Järna ;ESKD ;;Dala-Järna Airport ;Public ;(03/21,900m,Asphalt);60.552586;14.374097;
 Emmaboda ;ESMA ;;Emmaboda Airport ;Public ;(01/19,1300m,Asphalt);56.616426;15.608558;
@@ -26,7 +26,6 @@ Hultsfred / Vimmerby ;ESSF ;HLF ;Hultsfred–Vimmerby Airport ;Public ;(12/30,19
 Idre ;ESUE ;IDB ;Idre Airport ;Private ;(15/33,1558m,Asphalt);61.869722;12.689167;
 Jokkmokk ;ESNJ ;;Jokkmokk Airbase ;Military ;(14/32,1311m,Asphalt);66.502845;20.135248;
 Jönköping ;ESGJ ;JKG ;Jönköping Airport ;Public ;(01/19,2203m,Asphalt),(11/29,600m,Grass);57.758333;14.071667;21854
-Kalixfors ;ESUK ;;Kalixfors Army Airbase ;Military ;(05/23,900m,Asphalt11/29),(880m,Asphalt17/35,1200m,Asphalt);67.762627;20.251844;
 Kalmar ;ESMQ ;KLR ;Kalmar Airport ;Public ;(16/34,2050m,Asphalt),(05/23,980m,Asphalt);56.685278;16.2875;113488
 Karlsborg ;ESIA ;;Karlsborg Airbase ;Military ;(06/24,2300m,Asphalt);58.518074;14.523284;
 Karlskoga ;ESKK ;KSK ;Karlskoga Airport ;Public ;(03/21,1499m,Asphalt);59.340874;14.492015;

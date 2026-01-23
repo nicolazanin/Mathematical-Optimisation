@@ -46,7 +46,7 @@ def great_circle_path(lat1, lon1, lat2, lon2, num_points=10):
 
     return lat, lon
 
-df = pd.read_csv("swe_pd_2019_1km_ASCII_XYZ.csv") # from https://hub.worldpop.org/geodata/summary?id=44035
+df = pd.read_csv("../case_study/swe_pd_2019_1km_ASCII_XYZ.csv") # from https://hub.worldpop.org/geodata/summary?id=44035
 
 gdf = gpd.GeoDataFrame(
     df,
@@ -101,7 +101,6 @@ fig = px.choropleth_map(
     locations=grid_plot.index,
     color="density",
     color_continuous_scale="YlOrRd",
-    map_style="carto-positron",
     center={"lat": 62.0, "lon": 15.0},
     zoom=4.5,
     opacity=0.3,
@@ -109,7 +108,7 @@ fig = px.choropleth_map(
     title="Population Density in Sweden (50 km grid)"
 )
 
-df_airports = pd.read_csv('swe_airports.csv', sep=";")
+df_airports = pd.read_csv('../case_study/swe_airports.csv', sep=";")
 icao = [str(code) for code in list(df_airports["ICAO"])]
 iata = [str(code) for code in list(df_airports["IATA"])]
 runways = [str(code) for code in list(df_airports["runway(s)"])]
@@ -119,7 +118,7 @@ fig.add_trace(go.Scattermap(
     lat = df_airports['lat'],
     mode = 'markers',
     customdata= labes,
-    hovertemplate="Coordinates: %{lon:.3f}°E %{lat:.3f}°N <br>"
+    hovertemplate="Coordinates: %{lat:.3f}°N %{lon:.3f}°E<br>"
                   "ICAO: %{customdata[0]}<br> IATA: %{customdata[1]}<br>"
                   "Runway(s): %{customdata[2]}  <extra></extra>",
     marker = dict(
@@ -134,19 +133,18 @@ airport_coords = df_airports[['lat', 'lon']].values
 from geopy.distance import great_circle
 
 # Generate great circle paths
-start = airport_coords[88]
-end = airport_coords[34]
+# start = airport_coords[32]
+# end = airport_coords[4]
+#
+# # Interpolate great circle path points
+# lat, lon = great_circle_path(start[0], start[1], end[0], end[1], num_points=10)
+#
+#
+# # Flatten the lists of latitudes and longitudes
+# fig.add_trace(go.Scattermap(
+#     lat=lat,
+#     lon=lon,
+#     mode='lines',
+# ))
 
-# Interpolate great circle path points
-lat, lon = great_circle_path(start[0], start[1], end[0], end[1], num_points=10)
-
-
-# Flatten the lists of latitudes and longitudes
-fig.add_trace(go.Scattermap(
-    lat=lat,
-    lon=lon,
-    mode='lines',
-))
 fig.show()
-
-
