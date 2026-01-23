@@ -1,4 +1,5 @@
 import yaml
+import os
 from dataclasses import dataclass
 from dacite import from_dict
 import logging
@@ -48,6 +49,7 @@ class PathsConfig:
     max_total_time_travel: float
     min_ground_travel_time_to_destination_cell: float
 
+
 @dataclass
 class ModelConfig:
     epsilon: int
@@ -56,6 +58,7 @@ class ModelConfig:
     lexicographic: bool
     mip_gap: float
     max_run_time: int
+
 
 @dataclass
 class HeuristicConfig:
@@ -108,7 +111,9 @@ class Settings:
         Returns:
             Settings: An instance of the Settings class populated with data from the file.
         """
-        with open(path, "r") as f:
+        root_dir = os.path.abspath(os.path.dirname(__file__))
+        config_path = os.path.join(root_dir, "../" + path)
+        with open(config_path, "r") as f:
             raw = yaml.safe_load(f)
 
         return from_dict(data_class=cls, data=raw)
