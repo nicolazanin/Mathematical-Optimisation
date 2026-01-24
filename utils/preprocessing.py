@@ -96,9 +96,11 @@ def get_attractive_paths_from_rft(paths: np.ndarray, distances: dict, routing_fa
 
 
 def get_population_cells_paths(population_coords, paths: np.ndarray, distances: dict,
-                               population_cells_near_airports: dict, destinations_airports_info,
-                               population_cells2airport_distances, population_cells_too_close_to_destination_cells,
-                               ground_speed, air_speed, max_total_time) -> dict:
+                               population_cells_near_airports: dict, destinations_airports_info: list,
+                               population_cells2airport_distances: np.ndarray,
+                               population_cells_too_close_to_destination_cells: dict,
+                               airports_too_close_to_destination_cells: dict, ground_speed: int, air_speed: int,
+                               max_total_time: float) -> dict:
     """
     Determine feasible flight paths for each population cell based on travel-time constraints.
 
@@ -106,6 +108,7 @@ def get_population_cells_paths(population_coords, paths: np.ndarray, distances: 
     - start at an airport located near the population cell,
     - end at an airport associated with a destination population cell,
     - do not connect population cells that are too close to a destination cell,
+    - do not connect airports that are too close to a destination cell,
     - and satisfy a maximum total travel time constraint that includes:
         * ground travel from the population cell to the departure airport,
         * air travel along the selected flight path,
@@ -123,8 +126,10 @@ def get_population_cells_paths(population_coords, paths: np.ndarray, distances: 
             distance)
         population_cells2airport_distances (np.ndarray): Array of shape (num_population_cells,num_airports) with
             cells-airports distances.
-        population_cells_too_close_to_destination_cells (dict): Dictionary mapping each destination cell to an array of
+        population_cells_too_close_to_destination_cells (dict): A dictionary mapping each destination cell to an array of
             population cell indices that are too close to it.
+        airports_too_close_to_destination_cells (dict): A dictionary mapping each destination cell to an array of
+            airports indices that are too close to it.
         ground_speed (int): Average ground speed.
         air_speed (int): Aircraft cruise speed.
         max_total_time (float): Maximum total travel time threshold (ground access component + flight time)
@@ -144,38 +149,43 @@ def get_population_cells_paths(population_coords, paths: np.ndarray, distances: 
     for simple_path in paths:
         start_airport = simple_path[0]
         end_airport = simple_path[-1]
+        dest_cell = dest_airport_info[end_airport]["dest_cell"]
+        if start_airport not in airports_too_close_to_destination_cells[dest_cell]:
+            flight_distance = 0.0
+            for i in range(len(simple_path) - 1):
+                node_pair = tuple(sorted((simple_path[i], simple_path[i + 1])))
+                flight_distance += distances[node_pair]
 
-        flight_distance = 0.0
-        for i in range(len(simple_path) - 1):
-            node_pair = tuple(sorted((simple_path[i], simple_path[i + 1])))
-            flight_distance += distances[node_pair]
+            flight_time = flight_distance / air_speed
 
-        flight_time = flight_distance / air_speed
+            for pop in population_cells_near_airports[start_airport]:
+                if pop not in np.append(population_cells_too_close_to_destination_cells[dest_cell], dest_cell):
+                    ground_start = population_cells2airport_distances[pop, start_airport] / ground_speed
+                    ground_end = dest_airport_info[end_airport]["distance"] / ground_speed
 
-        for pop in population_cells_near_airports[start_airport]:
-            dest_cell = dest_airport_info[end_airport]["dest_cell"]
-            if pop not in np.append(population_cells_too_close_to_destination_cells[dest_cell], dest_cell):
-                ground_start = population_cells2airport_distances[pop, start_airport] / ground_speed
-                ground_end = dest_airport_info[end_airport]["distance"] / ground_speed
+                    total_time = ground_start + flight_time + ground_end
 
-                total_time = ground_start + flight_time + ground_end
-
-                if total_time <= max_total_time:
-                    population_cells_paths[pop].append(simple_path)
+                    if total_time <= max_total_time:
+                        population_cells_paths[pop].append(simple_path)
+                    else:
+                        _logger.debug("The path {} can not be used by population cell {} due to "
+                                      "the limit on the 'max_total_time_travel' of {} hours".format(
+                            simple_path, pop, max_total_time))
                 else:
-                    _logger.debug("The path {} can not be used by population cell {} due to "
-                                  "the limit on the 'max_total_time_travel' of {} hours".format(
-                        simple_path, pop, max_total_time))
-            else:
-                _logger.debug("The path {} can not be used by population cell {} because the area is too close to the "
-                              "destination cell {} (based on 'min_ground_travel_time_to_destination_cell' and"
-                              " ground 'avg_speed')".format(simple_path, pop, dest_cell))
+                    _logger.debug(
+                        "The path {} can not be used by population cell {} because the area is too close to the "
+                        "destination cell {} (based on 'min_ground_travel_time_to_destination_cell' and"
+                        " ground 'avg_speed')".format(simple_path, pop, dest_cell))
+        else:
+            _logger.debug("The path {} can not be used because the starting airport: {} is too close to the "
+                          "destination cell {} (based on 'min_ground_travel_time_to_destination_cell' and"
+                          " ground 'avg_speed')".format(simple_path, simple_path[0], dest_cell))
 
     return population_cells_paths
 
 
 def get_population_cells_too_close_to_destination_cells(population_coords: np.ndarray, destination_cells: np.ndarray,
-                                                        min_distance: float) -> dict:
+                                                        min_distance_to_destination_cells: float) -> dict:
     """
     For each target population cell, identifies the population cells that are closer than a minimum distance.
 
@@ -183,8 +193,8 @@ def get_population_cells_too_close_to_destination_cells(population_coords: np.nd
         population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
             of population cell centers.
         destination_cells (list): Indices of destination population cells.
-        min_distance(float): Minimum allowed distance from (km).
-
+        min_distance_to_destination_cells(float): Minimum allowed distance to consider a population cell or an airport
+            from the destination cells (km).
     Returns:
         dict: A dictionary mapping each destination cell to an array of population cell indices that are too close to it.
     """
@@ -196,13 +206,47 @@ def get_population_cells_too_close_to_destination_cells(population_coords: np.nd
     target_to_close_cells = {}
 
     for i, target_idx in enumerate(destination_cells):
-        close_cells = np.where(distances[i] < min_distance)[0]
+        close_cells = np.where(distances[i] < min_distance_to_destination_cells)[0]
         target_to_close_cells[target_idx] = close_cells
         _logger.info(
             "For the destination cell {} the following population cells {} are closer than the minimum distance of {:.0f}km".format(
-                target_idx, close_cells, min_distance))
+                target_idx, close_cells, min_distance_to_destination_cells))
 
     return target_to_close_cells
+
+
+def get_airports_too_close_to_destination_cells(airports_coords: np.ndarray, population_coords: np.ndarray,
+                                                destination_cells: np.ndarray,
+                                                min_distance_to_destination_cells: float) -> dict:
+    """
+    For each target population cell, identifies the airports that are closer than a minimum distance.
+
+    Args:
+        airports_coords (np.ndarray): A NumPy array of shape (num_airports, 2) containing (x, y) coordinates of each
+            airport.
+        population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
+            of population cell centers.
+        destination_cells (list): Indices of destination population cells.
+        min_distance_to_destination_cells(float): Minimum allowed distance to consider a population cell or an airport
+            from the destination cells (km).
+
+    Returns:
+        dict: A dictionary mapping each destination cell to an array of airports indices that are too close to it.
+    """
+    target_coords = population_coords[destination_cells]
+    diff = target_coords[:, None, :] - airports_coords[None, :, :]
+    distances = np.linalg.norm(diff, axis=2)
+
+    target_to_close_airports = {}
+
+    for i, target_idx in enumerate(destination_cells):
+        close_cells = np.where(distances[i] < min_distance_to_destination_cells)[0]
+        target_to_close_airports[target_idx] = close_cells
+        _logger.info(
+            "For the destination cell {} the following airports {} are closer than the minimum distance of {:.0f}km".format(
+                target_idx, close_cells, min_distance_to_destination_cells))
+
+    return target_to_close_airports
 
 
 def get_attractive_paths(population_cells_paths: dict) -> np.ndarray:

@@ -9,7 +9,8 @@ from utils.init_dataset import (cells_generation, nodes_generation, get_populati
                                 get_population_cells2airports_distances)
 from utils.preprocessing import (get_threshold_graph, get_attractive_paths_from_rft, get_all_paths_to_destinations,
                                  get_population_cells_paths, get_population_cells_too_close_to_destination_cells,
-                                 get_attractive_paths, get_attractive_graph)
+                                 get_attractive_paths, get_attractive_graph,
+                                 get_airports_too_close_to_destination_cells)
 from model.utils_model import get_outputs_from_model
 from utils.plot import plot_dataset
 from model.eanc_reg_model import solve_eacn_model
@@ -86,7 +87,11 @@ min_distance_to_destination_cells = (settings.ground_access_config.avg_speed *
                                      settings.paths_config.min_ground_travel_time_to_destination_cell)
 population_cells_too_close_to_destination_cells = get_population_cells_too_close_to_destination_cells(
     population_coords=population_coords, destination_cells=settings.population_config.destination_cells,
-    min_distance=min_distance_to_destination_cells)
+    min_distance_to_destination_cells=min_distance_to_destination_cells)
+airports_too_close_to_destination_cells = (
+    get_airports_too_close_to_destination_cells(airports_coords=airports_coords, population_coords=population_coords,
+                                                destination_cells=settings.population_config.destination_cells,
+                                                min_distance_to_destination_cells=min_distance_to_destination_cells))
 population_cells_paths = (
     get_population_cells_paths(population_coords=population_coords,
                                paths=attractive_paths_from_rft, distances=airports_distances,
@@ -94,6 +99,7 @@ population_cells_paths = (
                                destinations_airports_info=destinations_airports_info,
                                population_cells2airport_distances=population_cells2airport_distances,
                                population_cells_too_close_to_destination_cells=population_cells_too_close_to_destination_cells,
+                               airports_too_close_to_destination_cells=airports_too_close_to_destination_cells,
                                ground_speed=settings.ground_access_config.avg_speed,
                                air_speed=settings.aircraft_config.cruise_speed,
                                max_total_time=settings.paths_config.max_total_time_travel))
@@ -135,7 +141,8 @@ else:
                  graph_below_tau=airports_graph_below_tau, graph_above_tau=airports_graph_above_tau,
                  destination_airports=destination_airports,
                  destination_cells=settings.population_config.destination_cells,
-                 max_ground_distance=max_ground_distance, all_paths=all_paths,
+                 max_ground_distance=max_ground_distance,
+                 min_distance_to_destination_cells=min_distance_to_destination_cells, all_paths=all_paths,
                  attractive_paths=attractive_paths,
                  population_cells_paths=population_cells_paths, charging_airports=charging_airports,
                  active_path_indices=active_path_indices, plot_name=plot_name,

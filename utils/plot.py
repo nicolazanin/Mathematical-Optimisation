@@ -130,8 +130,8 @@ def get_destination_cells(population_coords: np.ndarray, destination_cells: list
     return destination_cell_markers
 
 
-def get_ground_dist_destination_cells(population_coords: np.ndarray, destination_cells: list,
-                                      max_ground_distance: float) -> list[go.Scatter]:
+def get_max_ground_dist_destination_cells(population_coords: np.ndarray, destination_cells: list,
+                                          max_ground_distance: float) -> list[go.Scatter]:
     """
     Returns a list of Scatter objects representing the circular area of 'max ground distance' from each destination
     cell.
@@ -165,6 +165,50 @@ def get_ground_dist_destination_cells(population_coords: np.ndarray, destination
             legend="legend1",
             legendgroup="max_ground_distance",
             legendrank=3,
+            visible='legendonly',
+        )
+        circle_traces.append(circle_trace)
+
+    return circle_traces
+
+
+def get_min_dist_destination_cells(population_coords: np.ndarray, destination_cells: list,
+                                   min_distance_to_destination_cells: float) -> list[go.Scatter]:
+    """
+    Returns a list of Scatter objects representing the circular area of 'min_distance_to_destination_cells'
+    from each destination cell.
+
+    Args:
+        population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
+            of population cell centers.
+        destination_cells (list): An array of destination cell indices.
+        min_distance_to_destination_cells(float): Minimum allowed distance to consider a population cell or an airport
+            from the destination cells (km).
+    Returns:
+        list: A list of Scatter objects representing the circular area of 'min_distance_to_destination_cells' from each
+            destination cell.
+    """
+    circle_traces = []
+
+    for i, idx in enumerate(destination_cells):
+        x_center, y_center = population_coords[idx]
+        theta = np.linspace(0, 2 * np.pi, 200)
+        x_circle = x_center + min_distance_to_destination_cells * np.cos(theta)
+        y_circle = y_center + min_distance_to_destination_cells * np.sin(theta)
+        circle_trace = go.Scatter(
+            x=x_circle,
+            y=y_circle,
+            mode='lines',
+            fill='toself',
+            fillcolor='rgba(147, 112, 219, 0.15)',
+            line=dict(color='rgba(147, 112, 219, 0.5)', width=2, dash='dot'),
+            name="Min Distance From Destination Cells" if i == 0 else None,
+            hovertemplate="Population Cell: {}<br>Min Distance: {}km<extra></extra>".format(idx,
+                                                                                    min_distance_to_destination_cells),
+            showlegend=(i == 0),
+            legend="legend1",
+            legendgroup="min_distance",
+            legendrank=4,
             visible='legendonly',
         )
         circle_traces.append(circle_trace)
@@ -236,7 +280,7 @@ def get_airports(airports_coords: np.ndarray) -> go.Scatter:
         hovertemplate="Airport: %{customdata}<extra></extra>",
         showlegend=True,
         legend="legend1",
-        legendrank=4
+        legendrank=5
     )
 
     return airport_markers
@@ -582,9 +626,9 @@ def get_ground_dist_paths_origins_airports(airports_coords: np.ndarray, paths: n
 def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, airports_coords: np.ndarray,
                  airport_distances: dict, graph_below_tau: nx.Graph, graph_above_tau: nx.Graph,
                  destination_airports: np.ndarray, destination_cells: list, max_ground_distance: float,
-                 all_paths: np.ndarray, attractive_paths: np.ndarray, population_cells_paths: dict,
-                 charging_airports: list, active_path_indices: np.ndarray, plot_name: str, simple_plot_enable: bool,
-                 save_plot: bool) -> None:
+                 min_distance_to_destination_cells: float, all_paths: np.ndarray, attractive_paths: np.ndarray,
+                 population_cells_paths: dict, charging_airports: list, active_path_indices: np.ndarray, plot_name: str,
+                 simple_plot_enable: bool, save_plot: bool) -> None:
     """
     Main function to plot the full dataset.
 
@@ -602,6 +646,8 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
         destination_airports (np.ndarray): A NumPy array of destination airports indices close to the destination cells.
         destination_cells (list): An array of destination cell indices.
         max_ground_distance (float): Maximum allowed ground distance to consider a population cell "near" an airport.
+        min_distance_to_destination_cells(float): Minimum allowed distance to consider a population cell or an airport
+            from the destination cells (km).
         all_paths (np.ndarray): A NumPy array of all paths (each path is a list of node IDs).
         attractive_paths (np.ndarray):  A NumPy array of attractive paths (each path is a list of node IDs).
         population_cells_paths (dict):  A dictionary mapping each population cell index to a list of paths (each path is
@@ -630,9 +676,14 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
                                                      destination_cells=destination_cells)
     fig.add_trace(destination_cell_markers)
 
-    round_dist_destination_cells = get_ground_dist_destination_cells(population_coords=population_coords,
+    round_dist_destination_cells = get_max_ground_dist_destination_cells(population_coords=population_coords,
                                                                      destination_cells=destination_cells,
                                                                      max_ground_distance=max_ground_distance)
+    fig.add_traces(round_dist_destination_cells)
+
+    round_dist_destination_cells = get_min_dist_destination_cells(population_coords=population_coords,
+                                                    destination_cells=destination_cells,
+                                                    min_distance_to_destination_cells=min_distance_to_destination_cells)
     fig.add_traces(round_dist_destination_cells)
 
     if not simple_plot_enable:
