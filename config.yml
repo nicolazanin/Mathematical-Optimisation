@@ -13,6 +13,7 @@ airports_config:
   min_cost: 1
   max_cost: 10
   additional_airport_coords: [[240, 420], [160,579], [120, 569], [20, 70]]
+  charging_bases_lim: 6
 
 aircraft_config:
   tau: 400 # maximum travel range on a single charge

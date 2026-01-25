@@ -28,6 +28,7 @@ class AirportsConfig:
     min_cost: int
     max_cost: int
     additional_airport_coords: list
+    charging_bases_lim: int
 
 
 @dataclass

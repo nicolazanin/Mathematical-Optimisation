@@ -13,6 +13,7 @@ airports_config:
   min_cost: 1
   max_cost: 1
   additional_airport_coords: []
+  charging_bases_lim: 3
 
 aircraft_config:
   tau: 400 # maximum travel range on a single charge
@@ -51,4 +52,4 @@ logging_lvl: 10 # 10: debug; 20: info
 print_logs: False
 show_plot: True
 simple_plot_enable: True # true to plot minimum information
-save_plot: False
+save_plot: True
