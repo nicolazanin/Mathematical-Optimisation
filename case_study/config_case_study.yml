@@ -1,18 +1,18 @@
 population_config:
-  cells_x: 10   # To achieve maximum scalability, the grid is built using the number of cells along the X and Y axes,
-  cells_y: 10   # as well as the area of a single cell.
-  cell_area: 4500 # total area of 450,000 square kilometers
+  cells_x: 0
+  cells_y: 0
+  cell_area: 2500
   min_density: 1
-  max_density: 5000
-  high_population_cells: [78, 22, 71]
-  destination_cells: [22]
+  max_density: 1
+  high_population_cells: []
+  destination_cells: [157]
 
 airports_config:
-  num: 15
-  min_distance: 30 # km
+  num: 0
+  min_distance: 0
   min_cost: 1
-  max_cost: 10
-  additional_airport_coords: [[240, 420], [160,579], [120, 569], [20, 70]]
+  max_cost: 1
+  additional_airport_coords: []
 
 aircraft_config:
   tau: 400 # maximum travel range on a single charge
@@ -31,23 +31,24 @@ paths_config:
                                                   # population cell to a destination cell to consider the paths starting
                                                   # form that population cell as attractive
 
+
 model_config:
   epsilon: 30 # small positive number to define big-M parameters
   mu_1: 1 # weight of first objective function
   mu_2: 0.01 # weight of first objective function
-  lexicographic: True # true if the model combines the two objective functions in a lexicographic order
+  lexicographic: False # true if the model combines the two objective functions in a lexicographic order
   mip_gap: 0.000 # MIP gap termination condition value
-  max_run_time: 200 # model maximum run time in seconds
+  max_run_time: 5000 # model maximum run time in seconds
 
 heuristic_config:
-  enable: False # true if the kernel search heuristic is enabled.
+  enable: True # true if the kernel search heuristic is enabled.
   initial_kernel_size: 5 # kernel search heuristic initial kernel size
   buckets_size: 10 # kernel search heuristic buckets size
   iterations: 3 # kernel search heuristic total iterations
 
-random_seed: 559
+random_seed: 0
 logging_lvl: 10 # 10: debug; 20: info
 print_logs: False
 show_plot: True
-simple_plot_enable: False # true to plot minimum information
+simple_plot_enable: True # true to plot minimum information
 save_plot: False

@@ -46,6 +46,7 @@ class GroundAccessConfig:
 class PathsConfig:
     max_edges: int
     routing_factor_thr: float
+    res: float
     max_total_time_travel: float
     min_ground_travel_time_to_destination_cell: float
 

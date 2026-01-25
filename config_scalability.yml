@@ -25,6 +25,7 @@ ground_access_config:
 paths_config:
   max_edges: 3 # maximum of 3 adjacent edges (maximum of 2 intermediate airports)
   routing_factor_thr: 1.4 # ratio between the path’s total flight distance and the nonstop flight distance
+  res: 0.0 # Flight reserve factor
   max_total_time_travel: 10 # this is the max total travel time threshold (ground access component + flight time)
   min_ground_travel_time_to_destination_cell: 0   # this is the minimum ground transportation travel time form any
                                                   # population cell to a destination cell to consider the paths starting
