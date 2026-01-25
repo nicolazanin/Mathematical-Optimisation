@@ -11,8 +11,8 @@ _logger = logging.getLogger(__name__)
 
 def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarray, attractive_paths: np.ndarray,
                      attractive_graph: nx.Graph, population_cells_paths: dict, destinations_airports_info: list,
-                     tau: int, mu_1: float, mu_2: float, mip_gap: float, epsilon: int, lexicographic: bool,
-                     ks: bool, initial_kernel_size: int, buckets_size: int, iterations: int,
+                     tau: int, mu_1: float, mu_2: float, mip_gap: float, epsilon: int, charging_bases_lim: int,
+                     lexicographic: bool, ks: bool, initial_kernel_size: int, buckets_size: int, iterations: int,
                      max_run_time: int) -> tuple:
     """
     Solves the EACN model using Gurobi with the possibility to use the kernel search heuristic.
@@ -33,6 +33,7 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
         mu_2 (float): Weight of second objective function.
         mip_gap (float): MIP gap termination condition value.
         epsilon (int): Small positive number to define big-M parameters.
+        charging_bases_lim (int): Charging bases number limit.
         lexicographic (bool): True if the model combines the two objective functions in a lexicographic order.
         ks (bool): True if the kernel search heuristic is enabled.
         initial_kernel_size (int): # Kernel search heuristic initial kernel size.
@@ -55,7 +56,7 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
     m, y_vars, phi_vars = model(airports=attractive_airports, paths=attractive_paths, graph=attractive_graph,
                                 population_cells_paths=population_cells_paths,
                                 destinations_airports_info=destinations_airports_info, tau=tau, mip_gap=mip_gap,
-                                epsilon=epsilon, max_run_time=max_run_time)
+                                charging_bases_lim=charging_bases_lim, epsilon=epsilon, max_run_time=max_run_time)
 
     population_covered = np.array([population_density[idx] * phi_vars[idx, dest_cell]
                                    for idx in population_cells_paths for dest_cell in

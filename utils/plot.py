@@ -39,11 +39,11 @@ def get_population_heatmap(population_coords: np.ndarray, population_density: np
 
     density_heatmap = go.Heatmap(
         z=z_grid,
-        x=x_unique,
+        x=np.sort(x_unique),
         y=np.sort(y_unique),
         colorscale=custom_colorscale,
         colorbar=dict(title=dict(
-            text="Population Density: ",
+            text="Population Density [people/km²]: ",
             font=dict(
                 size=12,
             ),
@@ -83,7 +83,7 @@ def get_population_cells(population_coords: np.ndarray) -> go.Scatter:
         y=population_coords[:, 1],
         mode='markers',
         marker=dict(size=5, color='rgba(128, 128, 128, 0.5)'),
-        name='Population Cell',
+        name='Population Cells',
         customdata=labels,
         showlegend=True,
         hovertemplate="Population Cell: %{customdata}<br>"
@@ -119,7 +119,7 @@ def get_destination_cells(population_coords: np.ndarray, destination_cells: list
                 width=2
             )
         ),
-        name="Destination Cell",
+        name="Destination Cells",
         customdata=labels,
         hovertemplate="Destination Cell: %{customdata} <extra></extra>",
         showlegend=True,
@@ -416,7 +416,7 @@ def get_destination_airports(airports_coords: np.ndarray, destination_airports: 
                       "Destination Airport: %{customdata[0]}<extra></extra>",
         showlegend=True,
         legend="legend1",
-        legendrank=5
+        legendrank=6
     )
 
     return destination_airport_markers
@@ -623,14 +623,17 @@ def get_ground_dist_paths_origins_airports(airports_coords: np.ndarray, paths: n
     return circle_traces
 
 
-def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, airports_coords: np.ndarray,
-                 airport_distances: dict, graph_below_tau: nx.Graph, graph_above_tau: nx.Graph,
-                 destination_airports: np.ndarray, destination_cells: list, max_ground_distance: float,
-                 min_distance_to_destination_cells: float, all_paths: np.ndarray, attractive_paths: np.ndarray,
-                 population_cells_paths: dict, charging_airports: list, active_path_indices: np.ndarray, plot_name: str,
-                 simple_plot_enable: bool, save_plot: bool) -> None:
+def plot_dataset_and_solution(population_coords: np.ndarray, population_density: np.ndarray,
+                              airports_coords: np.ndarray,
+                              airport_distances: dict, graph_below_tau: nx.Graph, graph_above_tau: nx.Graph,
+                              destination_airports: np.ndarray, destination_cells: list, max_ground_distance: float,
+                              min_distance_to_destination_cells: float, all_paths: np.ndarray,
+                              attractive_paths: np.ndarray,
+                              population_cells_paths: dict, charging_airports: list, active_path_indices: np.ndarray,
+                              plot_name: str,
+                              simple_plot_enable: bool, save_plot: bool) -> None:
     """
-    Main function to plot the full dataset.
+    Main function to plot the full dataset and the solution of the EANC-REG model.
 
     Args:
         population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
@@ -677,13 +680,13 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
     fig.add_trace(destination_cell_markers)
 
     round_dist_destination_cells = get_max_ground_dist_destination_cells(population_coords=population_coords,
-                                                                     destination_cells=destination_cells,
-                                                                     max_ground_distance=max_ground_distance)
+                                                                         destination_cells=destination_cells,
+                                                                         max_ground_distance=max_ground_distance)
     fig.add_traces(round_dist_destination_cells)
 
     round_dist_destination_cells = get_min_dist_destination_cells(population_coords=population_coords,
-                                                    destination_cells=destination_cells,
-                                                    min_distance_to_destination_cells=min_distance_to_destination_cells)
+                                                                  destination_cells=destination_cells,
+                                                                  min_distance_to_destination_cells=min_distance_to_destination_cells)
     fig.add_traces(round_dist_destination_cells)
 
     if not simple_plot_enable:
@@ -924,7 +927,7 @@ def plot_dataset(population_coords: np.ndarray, population_density: np.ndarray, 
             )
         ]
     )
-    fig.layout.plot_bgcolor = 'rgb(250, 245, 250)'
+    fig.layout.plot_bgcolor = 'rgb(250, 250, 250)'
     if save_plot:
         fig.write_html("{}_{}.html".format(plot_name, datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")))
     else:

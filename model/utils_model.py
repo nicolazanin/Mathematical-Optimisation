@@ -7,7 +7,8 @@ from collections import defaultdict
 
 
 def model(airports: list, paths: np.ndarray, graph: nx.Graph, population_cells_paths: dict,
-          destinations_airports_info: list, tau: int, mip_gap: float, epsilon: int, max_run_time: int) -> tuple:
+          destinations_airports_info: list, tau: int, mip_gap: float, epsilon: int, charging_bases_lim:int,
+          max_run_time: int) -> tuple:
     """
 
     Args:
@@ -21,6 +22,7 @@ def model(airports: list, paths: np.ndarray, graph: nx.Graph, population_cells_p
         tau (int): Maximum travel range on a single charge.
         mip_gap (float): MIP gap termination condition value.
         epsilon (int): Small positive number to define big-M parameters.
+        charging_bases_lim (int): Charging bases number limit.
         max_run_time (int): The maximum run time in seconds.
 
     Returns:
@@ -36,11 +38,9 @@ def model(airports: list, paths: np.ndarray, graph: nx.Graph, population_cells_p
     rho = m.addVars([i for i in airports], vtype=GRB.CONTINUOUS, name="rho", lb=0.0)
     chi = m.addVars([i for i in airports], vtype=GRB.BINARY, name="chi")
 
-    canonical_edges = sorted(list(tuple(sorted(edge)) for edge in graph.edges()))
-    z = m.addVars(canonical_edges, vtype=GRB.BINARY, name="z")
+    z = m.addVars([(i, j) for i in airports for j in graph.neighbors(i)], vtype=GRB.BINARY, name="z")
 
-    w = m.addVars([(i, j) for i in airports for j in graph.neighbors(i)],
-                  vtype=GRB.BINARY, name="w")
+    w = m.addVars([(i, j) for i in airports for j in graph.neighbors(i)], vtype=GRB.BINARY, name="w")
 
     dest_airports_info = {dest_cell: airport_idx for dest_cell, airport_idx, _ in destinations_airports_info}
 
@@ -58,21 +58,20 @@ def model(airports: list, paths: np.ndarray, graph: nx.Graph, population_cells_p
             m.addConstr(rho[airport] >= graph.edges[airport, neighbor]['weight'] + rho[neighbor] - m2_vals[
                 (airport, neighbor)] * (
                                 1 - w[(airport, neighbor)]))  # 14
+            m.addConstr(graph.edges[airport, neighbor]['weight'] + rho[airport] + rho[neighbor] <= tau +
+                        m3_vals[airport, neighbor] * (1 - z[airport, neighbor]))  # 4
+            m.addConstr(z[airport, neighbor] <= 1 - chi[airport])  # 21
+            m.addConstr(z[airport, neighbor] <= 1 - chi[neighbor])  # 22
+            m4_ij = tau - graph.edges[airport, neighbor]['weight']
+            m.addConstr(graph.edges[airport, neighbor]['weight'] + rho[airport] + rho[neighbor] + m4_ij *
+                        z[airport, neighbor] >= tau)  # 24
 
         min_dist_to_neighbor = min(graph.edges[airport, neighbor]['weight'] for neighbor in neighbors)
         m.addConstr(rho[airport] >= min(min_dist_to_neighbor, m1_vals[airport]) * (1 - y[airport]))  # 20
 
-    for airport_i, airport_j in canonical_edges:
-        m.addConstr(graph.edges[airport_i, airport_j]['weight'] + rho[airport_i] + rho[airport_j] <= tau +
-                    m3_vals[airport_i, airport_j] * (1 - z[airport_i, airport_j]))  # 4
-        m.addConstr(z[airport_i, airport_j] <= 1 - chi[airport_i])  # 21
-        m.addConstr(z[airport_i, airport_j] <= 1 - chi[airport_j])  # 22
-        m4_ij = tau - graph.edges[airport_i, airport_j]['weight']
-        m.addConstr(graph.edges[airport_i, airport_j]['weight'] + rho[airport_i] + rho[airport_j] + m4_ij *
-                    z[airport_i, airport_j] >= tau)  # 24
 
     for idx, path in enumerate(paths):
-        path_edges = [tuple(sorted((path[i], path[i + 1]))) for i in range(len(path) - 1)]
+        path_edges = [tuple((path[i], path[i + 1])) for i in range(len(path) - 1)]
         m.addConstr(psi[idx] - gp.quicksum(z[edge] for edge in path_edges) >= 1 - len(path_edges))  # 23
         for edge in path_edges:
             m.addConstr(psi[idx] <= z[edge])  # 5
@@ -85,6 +84,9 @@ def model(airports: list, paths: np.ndarray, graph: nx.Graph, population_cells_p
                 m.addConstr(phi[pop_cell, dest_cell] <= gp.quicksum(psi[p_id] for p_id in path_indices))
             else:
                 m.addConstr(phi[pop_cell, dest_cell] == 0)
+
+    m.addConstr(gp.quicksum(y[i] for i in airports) <= charging_bases_lim, name="limit_charging_bases")
+
     m.update()
 
     return m, y, phi

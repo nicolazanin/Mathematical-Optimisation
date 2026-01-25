@@ -161,6 +161,46 @@ def get_nodes_distances(nodes_coords: np.ndarray) -> dict:
     return distances
 
 
+def get_nodes_distances_alt(nodes_coords: np.ndarray, res: float) -> dict:
+    """
+    Computes adjusted pairwise distances between nodes, accounting for:
+    - diversion to alternate airports (alt_j)
+    - reserve/contingency energy (res), if res = 0 also the diversion to alternate airports adjustment is skipped.
+
+    Args:
+        nodes_coords (np.ndarray): A NumPy array of shape (n, 2) containing (x, y) coordinates of each node.
+        res (float): Flight reserve factor.
+
+    Returns:
+        dict: A dictionary where each key is a tuple (i, j) representing a pair of node indices, and the value is the
+            Euclidean distance between node i and node j adjusted with diversion to alternate airports (alt_j) and
+            reserve/contingency energy (res).
+    """
+    distances = {}
+    num_nodes = len(nodes_coords)
+    alt_distances = np.zeros(num_nodes)
+
+    for j in range(num_nodes):
+        dists = np.linalg.norm(nodes_coords - nodes_coords[j], axis=1)
+        dists[j] = np.inf
+        alt_distances[j] = np.min(dists)
+
+    for i in range(num_nodes):
+        for j in range(num_nodes):
+            if i !=j:
+                d_ij = np.linalg.norm(nodes_coords[i] - nodes_coords[j])
+                if res != 0:
+                    d_hat = d_ij * (1 + res) + alt_distances[j]
+                else:
+                    d_hat = d_ij
+                distances[(i, j)] = d_hat
+
+    _logger.info("Calculated {} adjusted distances between {} nodes (res={}%)".format(len(distances),
+                                                                                      num_nodes, res * 100))
+
+    return distances
+
+
 def get_population_cells_near_airports(airports_coords: np.ndarray, population_coords: np.ndarray,
                                        max_ground_distance: float) -> dict:
     """

@@ -49,8 +49,7 @@ def get_all_paths_to_destinations(graph: nx.Graph, destination_airports: np.ndar
     all_paths = []
     for source_node in graph.nodes():
         if source_node not in destination_airports:
-            paths = nx.all_simple_paths(graph, source=source_node, target=destination_airports,
-                                        cutoff=max_path_edges)
+            paths = nx.all_simple_paths(graph, source=source_node, target=destination_airports, cutoff=max_path_edges)
             all_paths.extend(list(paths))
     _logger.info("Defined {} simple paths to destination airport/s: {}".format(len(all_paths),
                                                                                destination_airports))
@@ -79,9 +78,9 @@ def get_attractive_paths_from_rft(paths: np.ndarray, distances: dict, routing_fa
     for path in paths:
         total_distance = 0.0
         for i in range(len(path) - 1):
-            node_pair = tuple(sorted((path[i], path[i + 1])))
+            node_pair = tuple((path[i], path[i + 1]))
             total_distance += distances[node_pair]
-        direct_pair = tuple(sorted((path[0], path[-1])))
+        direct_pair = tuple((path[0], path[-1]))
         direct_distance = distances[direct_pair]
 
         routing_factor = total_distance / direct_distance
@@ -153,7 +152,7 @@ def get_population_cells_paths(population_coords, paths: np.ndarray, distances: 
         if start_airport not in airports_too_close_to_destination_cells[dest_cell]:
             flight_distance = 0.0
             for i in range(len(simple_path) - 1):
-                node_pair = tuple(sorted((simple_path[i], simple_path[i + 1])))
+                node_pair = tuple((simple_path[i], simple_path[i + 1]))
                 flight_distance += distances[node_pair]
 
             flight_time = flight_distance / air_speed
@@ -281,7 +280,7 @@ def get_attractive_graph(distances: dict, attractive_paths: np.ndarray) -> nx.Gr
     active_graph = nx.Graph()
     for path in attractive_paths:
         for i in range(len(path) - 1):
-            node_pair = tuple(sorted((path[i], path[i + 1])))
+            node_pair = tuple((path[i], path[i + 1]))
             active_graph.add_edge(path[i], path[i + 1], weight=distances[node_pair])
     _logger.info(
         "Created attractive graph with {} edges and {} nodes".format(len(active_graph.edges), len(active_graph.nodes)))
