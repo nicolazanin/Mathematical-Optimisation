@@ -135,7 +135,7 @@ def get_population_cells_paths(population_coords, paths: np.ndarray, distances: 
 
     Returns:
         dict: A dictionary mapping each population cell index to a list of paths (each path is a list of node IDs)
-            starting from an airport near that population cell.
+            starting from an airport near that population cell and a list of total travel times for each path.
     """
     dest_airport_info = {
         airport_idx: {
@@ -143,7 +143,10 @@ def get_population_cells_paths(population_coords, paths: np.ndarray, distances: 
             "distance": distance,
         }
         for dest_cell, airport_idx, distance in destinations_airports_info}
-    population_cells_paths = {idx: [] for idx in range(len(population_coords))}
+    population_cells_paths = {
+        idx: {"paths": [], "total_times": []}
+        for idx in range(len(population_coords))
+    }
 
     for simple_path in paths:
         start_airport = simple_path[0]
@@ -165,7 +168,8 @@ def get_population_cells_paths(population_coords, paths: np.ndarray, distances: 
                     total_time = ground_start + flight_time + ground_end
 
                     if total_time <= max_total_time:
-                        population_cells_paths[pop].append(simple_path)
+                        population_cells_paths[pop]["paths"].append(simple_path)
+                        population_cells_paths[pop]["total_times"].append(total_time)
                     else:
                         _logger.debug("The path {} can not be used by population cell {} due to "
                                       "the limit on the 'max_total_time_travel' of {} hours".format(
@@ -254,12 +258,13 @@ def get_attractive_paths(population_cells_paths: dict) -> np.ndarray:
 
     Args:
         population_cells_paths (dict): A dictionary mapping each population cell index to a list of paths (each path is
-            a list of node IDs) starting from an airport near that population cell.
+            a list of node IDs) starting from an airport near that population cell and a list of total travel times for
+            each path.
 
     Returns:
          np.ndarray: A NumPy array of attractive paths (each path is a list of node IDs).
     """
-    attractive_paths = list({tuple(lst) for lists in population_cells_paths.values() for lst in lists})
+    attractive_paths = list({tuple(lst) for idx in population_cells_paths for lst in population_cells_paths[idx]["paths"]})
     _logger.info("Defined {} attractive paths".format(len(attractive_paths)))
 
     return np.array([list(t) for t in attractive_paths], dtype=object)

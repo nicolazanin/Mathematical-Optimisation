@@ -25,7 +25,8 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
         attractive_paths (np.ndarray): A NumPy array of attractive paths (each path is a list of node IDs).
         attractive_graph (nx.Graph): A NetworkX graph containing the filtered edges from the attractive paths.
         population_cells_paths (dict): A dictionary mapping each population cell index to a list of paths (each path is
-            a list of node IDs) starting from an airport near that population cell.
+            a list of node IDs) starting from an airport near that population cell and a list of total travel times for
+            each path.
         destinations_airports_info (list) : Each tuple in the list contains: (destination_cell_idx, closest_airport_idx,
             distance)
         tau (int): Maximum travel range on a single charge.

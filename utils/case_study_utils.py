@@ -126,6 +126,9 @@ def get_population_cells(df_population: pd.DataFrame, cell_area: float) -> gpd.G
         gpd.DataFrame: A GeoDataFrame containing a grid of square cells and the population density for each cell.
     """
     cell_width = cell_height = np.sqrt(cell_area)
+    delta = 30 / 3600
+    df_population["cell_area_km2"] = (111.32 * delta * 111.32 * delta * np.cos(np.deg2rad(df_population["Y"])))
+    df_population["population"] = df_population["Z"] * df_population["cell_area_km2"]
 
     gdf = gpd.GeoDataFrame(df_population, geometry=gpd.points_from_xy(df_population.X, df_population.Y),
                            crs="EPSG:4326")  # WGS84 we load the data in lat, lon
@@ -145,10 +148,10 @@ def get_population_cells(df_population: pd.DataFrame, cell_area: float) -> gpd.G
 
     population_cells = gpd.GeoDataFrame({"geometry": grid_cells}, crs="EPSG:3006")
     joined = gpd.sjoin(gdf, population_cells, predicate="within")
-    population_cells["Z"] = joined.groupby("index_right")["Z"].sum()
-    population_cells["Z"] = population_cells["Z"].fillna(0)
-    population_cells["density"] = population_cells["Z"] / (
-            population_cells.geometry.area / 1_000_000)  # (people per km²)
+    population_cells["population"] = joined.groupby("index_right")["population"].sum()
+    population_cells["population"] = population_cells["population"].fillna(0)
+    population_cells["density"] = population_cells["population"] / (
+                population_cells.geometry.area / 1_000_000)  # (people per km²)
     population_cells = population_cells[population_cells["density"] > 0.05]
     population_cells = population_cells.reset_index(drop=True)
     _logger.info("Generated a grid of {} cells (cell area={}km^2) form population dataframe".

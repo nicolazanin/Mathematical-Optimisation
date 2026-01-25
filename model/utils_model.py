@@ -16,7 +16,8 @@ def model(airports: list, paths: np.ndarray, graph: nx.Graph, population_cells_p
         paths (np.ndarray): A NumPy array of paths (each path is a list of node IDs).
         graph (nx.Graph): A NetworkX graph containing the paths.
         population_cells_paths (dict): A dictionary mapping each population cell index to a list of paths (each path is
-            a list of node IDs) starting from an airport near that population cell.
+            a list of node IDs) starting from an airport near that population cell and a list of total travel times for
+            each path.
         destinations_airports_info (list): Each tuple in the list contains: (destination_cell_idx, closest_airport_idx,
             distance)
         tau (int): Maximum travel range on a single charge.
@@ -78,7 +79,8 @@ def model(airports: list, paths: np.ndarray, graph: nx.Graph, population_cells_p
 
     for pop_cell in population_cells_paths:
         for dest_cell, airport_idx, _ in destinations_airports_info:
-            pop_cell_paths_to_airport = [path for path in population_cells_paths[pop_cell] if path[-1] == airport_idx]
+            pop_cell_paths_to_airport = [path for path in population_cells_paths[pop_cell]["paths"]
+                                         if path[-1] == airport_idx]
             path_indices = [idx for idx, path in enumerate(paths) if path in pop_cell_paths_to_airport]
             if path_indices:
                 m.addConstr(phi[pop_cell, dest_cell] <= gp.quicksum(psi[p_id] for p_id in path_indices))
@@ -137,15 +139,16 @@ def get_initial_kernel(population_cells_paths: dict, initial_kernel_size: int) -
 
     Args:
         population_cells_paths (dict): A dictionary mapping each population cell index to a list of paths (each path is
-            a list of node IDs) starting from an airport near that population cell.
+            a list of node IDs) starting from an airport near that population cell and a list of total travel times for
+            each path.
         initial_kernel_size (int): # Kernel search heuristic initial kernel size.
 
     Returns:
         list: A list of airports nodes IDs chosen for the initial kernel.
     """
     airport_served_pops = defaultdict(list)
-    for pop_id, paths in population_cells_paths.items():
-        for path in paths:
+    for pop_id in population_cells_paths:
+        for path in population_cells_paths[pop_id]["paths"]:
             for airport_node in path:
                 airport_served_pops[airport_node].append(pop_id)
 
