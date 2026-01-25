@@ -183,7 +183,7 @@ def get_population_cells_paths(population_coords, paths: np.ndarray, distances: 
     return population_cells_paths
 
 
-def get_population_cells_too_close_to_destination_cells(population_coords: np.ndarray, destination_cells: np.ndarray,
+def get_population_cells_too_close_to_destination_cells(population_coords: np.ndarray, destination_cells: list,
                                                         min_distance_to_destination_cells: float) -> dict:
     """
     For each target population cell, identifies the population cells that are closer than a minimum distance.
@@ -215,7 +215,7 @@ def get_population_cells_too_close_to_destination_cells(population_coords: np.nd
 
 
 def get_airports_too_close_to_destination_cells(airports_coords: np.ndarray, population_coords: np.ndarray,
-                                                destination_cells: np.ndarray,
+                                                destination_cells: list,
                                                 min_distance_to_destination_cells: float) -> dict:
     """
     For each target population cell, identifies the airports that are closer than a minimum distance.

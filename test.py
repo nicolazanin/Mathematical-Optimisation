@@ -136,8 +136,10 @@ m, time_exec = solve_eacn_model(population_density=population_density,
                                 max_run_time=settings.model_config.max_run_time)
 charging_airports = []
 active_path_indices = []
+population_covered = [int(cell) for cells in population_cells_too_close_to_destination_cells.values() for cell in cells]
 if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
-    charging_airports, population_covered, active_path_indices, bound = get_outputs_from_model(m)
+    charging_airports, population_from_dest, active_path_indices, bound = get_outputs_from_model(m)
+    population_covered = population_covered + population_from_dest
     _logger.info("Charging airports: {} ({})".format(str(charging_airports), len(charging_airports)))
     _logger.info("Population covered: {} ({})".format(str(population_covered), len(population_covered)))
 else:

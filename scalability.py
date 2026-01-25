@@ -5,12 +5,13 @@ import logging
 import time
 
 from utils.init_dataset import (cells_generation, nodes_generation, get_population_cells_near_airports,
-                                get_pop_density, get_nodes_distances, get_grid_dimensions,
+                                get_pop_density, get_nodes_distances_alt, get_grid_dimensions,
                                 get_activation_cost_airports, get_destinations_airports_info,
                                 get_population_cells2airports_distances)
 from utils.preprocessing import (get_threshold_graph, get_attractive_paths_from_rft, get_all_paths_to_destinations,
                                  get_population_cells_paths, get_population_cells_too_close_to_destination_cells,
-                                 get_attractive_paths, get_attractive_graph)
+                                 get_airports_too_close_to_destination_cells, get_attractive_paths,
+                                 get_attractive_graph)
 from model.utils_model import get_outputs_from_model
 from model.eanc_reg_model import solve_eacn_model
 from utils.settings import setup_logging, settings
@@ -42,7 +43,7 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int, ro
     _logger.info("-------------- routing_factor: {} --------------".format(settings.paths_config.routing_factor_thr))
 
     results = init_results_dict()
-    for i in range(10):
+    for i in range(5):
         results["test"].append(i)
         results["K"].append(settings.population_config.cells_x * settings.population_config.cells_y)
         results["N"].append(settings.airports_config.num)
@@ -75,7 +76,8 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int, ro
         activation_costs = get_activation_cost_airports(num_airports=np.size(airports_coords),
                                                         max_cost=settings.airports_config.max_cost,
                                                         min_cost=settings.airports_config.min_cost)
-        airports_distances = get_nodes_distances(nodes_coords=airports_coords)
+        airports_distances_alt = get_nodes_distances_alt(nodes_coords=airports_coords, res=settings.paths_config.res)
+
         _logger.info("-------------- Define Destination Airport/s --------------")
         max_ground_distance = settings.ground_access_config.avg_speed * settings.ground_access_config.max_time / 60
         population_cells_near_airports = get_population_cells_near_airports(airports_coords=airports_coords,
@@ -95,47 +97,59 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int, ro
 
         _logger.info("------------- Pre-Processing --------------")
         # Create two graph to identify the edges above and below the distance threshold tau (single charge range)
-        airports_graph_below_tau = get_threshold_graph(distances=airports_distances,
-                                                       tau=settings.aircraft_config.tau)
-        airports_graph_above_tau = get_threshold_graph(distances=airports_distances,
-                                                       tau=settings.aircraft_config.tau, mode='above')
+        airports_graph_below_tau_alt = get_threshold_graph(distances=airports_distances_alt,
+                                                           tau=settings.aircraft_config.tau)
 
         _logger.info("-------------- Define Paths --------------")
-        all_paths = get_all_paths_to_destinations(graph=airports_graph_below_tau,
+        all_paths = get_all_paths_to_destinations(graph=airports_graph_below_tau_alt,
                                                   destination_airports=destination_airports,
                                                   max_path_edges=settings.paths_config.max_edges)
-        attractive_paths_from_rft = get_attractive_paths_from_rft(paths=all_paths, distances=airports_distances,
+        attractive_paths_from_rft = get_attractive_paths_from_rft(paths=all_paths,
+                                                                  distances=airports_distances_alt,
                                                                   routing_factor_thr=settings.paths_config.routing_factor_thr)
 
         min_distance_to_destination_cells = (settings.ground_access_config.avg_speed *
                                              settings.paths_config.min_ground_travel_time_to_destination_cell)
-        population_cells_too_close_to_destination_cells = get_population_cells_too_close_to_destination_cells(
-            population_coords=population_coords, destination_cells=settings.population_config.destination_cells,
-            min_distance=min_distance_to_destination_cells)
+        population_cells_too_close_to_destination_cells = (
+            get_population_cells_too_close_to_destination_cells(population_coords=population_coords,
+                                                                destination_cells=settings.population_config.destination_cells,
+                                                                min_distance_to_destination_cells=min_distance_to_destination_cells))
+        airports_too_close_to_destination_cells = (
+            get_airports_too_close_to_destination_cells(airports_coords=airports_coords,
+                                                        population_coords=population_coords,
+                                                        destination_cells=settings.population_config.destination_cells,
+                                                        min_distance_to_destination_cells=min_distance_to_destination_cells))
         population_cells_paths = (
             get_population_cells_paths(population_coords=population_coords,
-                                       paths=attractive_paths_from_rft, distances=airports_distances,
+                                       paths=attractive_paths_from_rft,
+                                       distances=airports_distances_alt,
                                        population_cells_near_airports=population_cells_near_airports,
                                        destinations_airports_info=destinations_airports_info,
                                        population_cells2airport_distances=population_cells2airport_distances,
                                        population_cells_too_close_to_destination_cells=population_cells_too_close_to_destination_cells,
+                                       airports_too_close_to_destination_cells=airports_too_close_to_destination_cells,
                                        ground_speed=settings.ground_access_config.avg_speed,
                                        air_speed=settings.aircraft_config.cruise_speed,
                                        max_total_time=settings.paths_config.max_total_time_travel))
         attractive_paths = get_attractive_paths(population_cells_paths=population_cells_paths)
-        attractive_graph = get_attractive_graph(distances=airports_distances, attractive_paths=attractive_paths)
+        attractive_graph = get_attractive_graph(distances=airports_distances_alt, attractive_paths=attractive_paths)
 
         _logger.info("-------------- MILP Optimization --------------")
         for test_name in ["b&c", "kn_1", "kn_3"]:
             apply_preset(settings, "scalability_tests.yml", test_name)
 
-            m, time_exec = solve_eacn_model(population_density=population_density, attractive_paths=attractive_paths,
-                                            activation_costs=activation_costs, attractive_graph=attractive_graph,
+            m, time_exec = solve_eacn_model(population_density=population_density,
+                                            attractive_paths=attractive_paths,
+                                            activation_costs=activation_costs,
+                                            attractive_graph=attractive_graph,
                                             population_cells_paths=population_cells_paths,
                                             destinations_airports_info=destinations_airports_info,
-                                            tau=settings.aircraft_config.tau, mu_1=settings.model_config.mu_1,
-                                            mu_2=settings.model_config.mu_2, mip_gap=settings.model_config.mip_gap,
+                                            tau=settings.aircraft_config.tau,
+                                            mu_1=settings.model_config.mu_1,
+                                            mu_2=settings.model_config.mu_2,
+                                            mip_gap=settings.model_config.mip_gap,
                                             epsilon=settings.model_config.epsilon,
+                                            charging_bases_lim=settings.airports_config.charging_bases_lim,
                                             lexicographic=settings.model_config.lexicographic,
                                             ks=settings.heuristic_config.enable,
                                             initial_kernel_size=settings.heuristic_config.initial_kernel_size,
@@ -143,10 +157,13 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int, ro
                                             iterations=settings.heuristic_config.iterations,
                                             max_run_time=settings.model_config.max_run_time)
 
-            charging_airports, population_covered = [], []
+            charging_airports = []
+            population_covered = [int(cell) for cells in population_cells_too_close_to_destination_cells.values() for
+                                  cell in cells]
             bound = 0
             if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
-                charging_airports, population_covered, active_path_indices, bound = get_outputs_from_model(m)
+                charging_airports, population_from_dest, active_path_indices, bound = get_outputs_from_model(m)
+                population_covered = population_covered + population_from_dest
                 _logger.info("Charging airports: {} ({})".format(str(charging_airports), len(charging_airports)))
                 _logger.info("Population covered: {} ({})".format(str(population_covered), len(population_covered)))
             else:
@@ -169,8 +186,14 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int, ro
 
 if __name__ == "__main__":
     scalability(num=50, cell_x=10, cell_y=10, tau=400, cell_area=4500, routing_factor_thr=1.4)
-    scalability(num=50, cell_x=10, cell_y=10, tau=600, cell_area=4500, routing_factor_thr=1.2)
-    scalability(num=50, cell_x=10, cell_y=10, tau=800, cell_area=4500, routing_factor_thr=1.2)
-    scalability(num=50, cell_x=10, cell_y=20, tau=400, cell_area=2250, routing_factor_thr=1.4)
-    scalability(num=50, cell_x=10, cell_y=20, tau=600, cell_area=2250, routing_factor_thr=1.2)
-    scalability(num=50, cell_x=10, cell_y=20, tau=800, cell_area=2250, routing_factor_thr=1.2)
+    # scalability(num=50, cell_x=10, cell_y=10, tau=600, cell_area=4500, routing_factor_thr=1.2)
+    # scalability(num=50, cell_x=10, cell_y=10, tau=800, cell_area=4500, routing_factor_thr=1.2)
+    # scalability(num=50, cell_x=10, cell_y=20, tau=400, cell_area=2250, routing_factor_thr=1.4)
+    # scalability(num=50, cell_x=10, cell_y=20, tau=600, cell_area=2250, routing_factor_thr=1.2)
+    # scalability(num=50, cell_x=10, cell_y=20, tau=800, cell_area=2250, routing_factor_thr=1.2)
+    # scalability(num=100, cell_x=10, cell_y=10, tau=400, cell_area=4500, routing_factor_thr=1.4)
+    # scalability(num=100, cell_x=10, cell_y=10, tau=600, cell_area=4500, routing_factor_thr=1.2)
+    # scalability(num=100, cell_x=10, cell_y=10, tau=800, cell_area=4500, routing_factor_thr=1.2)
+    # scalability(num=100, cell_x=10, cell_y=20, tau=400, cell_area=2250, routing_factor_thr=1.4)
+    # scalability(num=100, cell_x=10, cell_y=20, tau=600, cell_area=2250, routing_factor_thr=1.2)
+    # scalability(num=100, cell_x=10, cell_y=20, tau=800, cell_area=2250, routing_factor_thr=1.2)

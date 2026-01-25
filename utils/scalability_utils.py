@@ -68,7 +68,7 @@ def flatten_results(results: dict) -> dict:
     return flattened
 
 
-def print_report(results, name: str) -> None:
+def print_report(results: dict, name: str) -> None:
     """
     Converts the results dictionary to a Pandas DataFrame and exports it to CSV.
 
