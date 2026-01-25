@@ -14,6 +14,9 @@ venv/
 #logs
 *log_file.txt
 
+# data
+*.csv
+
 #gurobi model
 *.lp
 *.html
