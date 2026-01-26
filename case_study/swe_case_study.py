@@ -150,13 +150,9 @@ else:
     _logger.info("-------------- Plot --------------")
     edges = []
     y, psi, phi, rho, chi, z, w = get_model_variables(m)
-    for k, value in w.items():
-        if value > 0.5:
-            edges.append(ast.literal_eval(k[1:]))
     for k, value in z.items():
         if value > 0.5:
-            if ast.literal_eval(k[1:])[0] in charging_airports and ast.literal_eval(k[1:])[1] in charging_airports:
-                edges.append(ast.literal_eval(k[1:]))
+            edges.append(ast.literal_eval(k[1:]))
     edges = list({tuple(sorted(x)) for x in edges})
     edges = [list(x) for x in edges]
     plot_name = "test_{}_{}".format(settings.airports_config.charging_bases_lim,settings.aircraft_config.tau)
