@@ -58,7 +58,7 @@ for total_time in [3, 4]:
     for tau in [400, 600]:
         results[total_time][tau] = {}
         settings.aircraft_config.tau = tau
-        for network in ["active"]:
+        for network in ["active", "non_active"]:
             results[total_time][tau][network] = {}
             _logger.info("-------------- Initialize the airports dataset --------------")
             _logger.info("Airports dataset initialized from {}".format(airports_file))

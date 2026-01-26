@@ -7,13 +7,13 @@ import time
 import os
 import urllib.request
 
-from utils.init_dataset import get_activation_cost_airports, get_nodes_distances, get_population_cells_near_airports, \
+from utils.init_dataset import get_activation_cost_airports, get_population_cells_near_airports, \
     get_population_cells2airports_distances, get_destinations_airports_info, get_nodes_distances_alt
 from utils.preprocessing import (get_threshold_graph, get_attractive_paths_from_rft, get_all_paths_to_destinations,
                                  get_population_cells_paths, get_population_cells_too_close_to_destination_cells,
                                  get_attractive_paths, get_attractive_graph,
                                  get_airports_too_close_to_destination_cells)
-from model.utils_model import get_outputs_from_model, get_model_variables
+from model.utils_model import get_outputs_from_model
 from model.eanc_reg_model import solve_eacn_model
 from utils.case_study_utils import (get_airports, get_population_cells, get_population_cells_centroids, plot_case_study)
 from utils.settings import settings, setup_logging

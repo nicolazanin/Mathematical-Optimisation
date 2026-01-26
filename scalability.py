@@ -186,11 +186,11 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int, ro
 
 if __name__ == "__main__":
     scalability(num=50, cell_x=10, cell_y=10, tau=400, cell_area=4500, routing_factor_thr=1.4)
-    # scalability(num=50, cell_x=10, cell_y=10, tau=600, cell_area=4500, routing_factor_thr=1.2)
-    # scalability(num=50, cell_x=10, cell_y=10, tau=800, cell_area=4500, routing_factor_thr=1.2)
-    # scalability(num=50, cell_x=10, cell_y=20, tau=400, cell_area=2250, routing_factor_thr=1.4)
-    # scalability(num=50, cell_x=10, cell_y=20, tau=600, cell_area=2250, routing_factor_thr=1.2)
-    # scalability(num=50, cell_x=10, cell_y=20, tau=800, cell_area=2250, routing_factor_thr=1.2)
+    scalability(num=50, cell_x=10, cell_y=10, tau=600, cell_area=4500, routing_factor_thr=1.2)
+    scalability(num=50, cell_x=10, cell_y=10, tau=800, cell_area=4500, routing_factor_thr=1.2)
+    scalability(num=50, cell_x=10, cell_y=20, tau=400, cell_area=2250, routing_factor_thr=1.4)
+    scalability(num=50, cell_x=10, cell_y=20, tau=600, cell_area=2250, routing_factor_thr=1.2)
+    scalability(num=50, cell_x=10, cell_y=20, tau=800, cell_area=2250, routing_factor_thr=1.2)
     # scalability(num=100, cell_x=10, cell_y=10, tau=400, cell_area=4500, routing_factor_thr=1.4)
     # scalability(num=100, cell_x=10, cell_y=10, tau=600, cell_area=4500, routing_factor_thr=1.2)
     # scalability(num=100, cell_x=10, cell_y=10, tau=800, cell_area=4500, routing_factor_thr=1.2)
