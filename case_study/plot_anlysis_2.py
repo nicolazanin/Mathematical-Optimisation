@@ -30,16 +30,15 @@ ttt_4_600_not_active = []
 for cell in sorted(results[4][600]["non_active"][3], key=lambda d: min(d['total_times'])):
     ttt_4_600_not_active.append([time * 60 for time in cell["total_times"]])
 
-
 titles = [
-    "(a) Curr. Ntw. ($\tau$=400 km, TTT=3 hrs)",
-    "(b) Curr. Ntw. ($\tau$=600 km, TTT=3 hrs)",
-    "(c) Curr. Ntw. ($\tau$=400 km, TTT=4 hrs)",
-    "(d) Curr. Ntw. ($\tau$=600 km, TTT=4 hrs)",
-    "(e) Full. Ntw. ($\tau$=400 km, TTT=3 hrs)",
-    "(f) Full. Ntw. ($\tau$=600 km, TTT=3 hrs)",
-    "(g) Full. Ntw. ($\tau$=400 km, TTT=4 hrs)",
-    "(h) Full. Ntw. ($\tau$=600 km, TTT=4 hrs)",
+    "(a) Curr. Ntw. (τ=400 km, TTT=3 hrs)",
+    "(b) Curr. Ntw. (τ=600 km, TTT=3 hrs)",
+    "(c) Curr. Ntw. (τ=400 km, TTT=4 hrs)",
+    "(d) Curr. Ntw. (τ=600 km, TTT=4 hrs)",
+    "(e) Full. Ntw. (τ=400 km, TTT=3 hrs)",
+    "(f) Full. Ntw. (τ=600 km, TTT=3 hrs)",
+    "(g) Full. Ntw. (τ=400 km, TTT=4 hrs)",
+    "(h) Full. Ntw. (τ=600 km, TTT=4 hrs)",
 ]
 
 fig = make_subplots(
