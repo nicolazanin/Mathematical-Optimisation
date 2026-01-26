@@ -550,15 +550,15 @@ def get_paths_population_cells(population_coords: np.ndarray, population_cells_p
     """
     paths_origins_population_cells = []
     added_paths = []
-    for pop_cell, paths in population_cells_paths.items():
-        for path in paths:
+    for pop_cell_id in population_cells_paths:
+        for path in population_cells_paths[pop_cell_id]["paths"]:
             if path not in added_paths:
                 added_paths.append(path)
                 show = True
             else:
                 show = False
             paths_origins_population_cells.append(go.Scatter(
-                x=[population_coords[pop_cell][0]], y=[population_coords[pop_cell][1]],
+                x=[population_coords[pop_cell_id][0]], y=[population_coords[pop_cell_id][1]],
                 mode='markers',
                 marker=dict(
                     color='rgba(147, 112, 219, 0.5)',
@@ -570,7 +570,7 @@ def get_paths_population_cells(population_coords: np.ndarray, population_cells_p
                     symbol="diamond"
                 ),
                 name="Path Origin Population Cells",
-                hovertemplate="Population Cell: {}<br>".format(pop_cell) +
+                hovertemplate="Population Cell: {}<br>".format(pop_cell_id) +
                               "Coordinates: %{x:.1f}km x %{y:.1f}km <extra></extra>",
                 showlegend=show,
                 legend="legend4",
