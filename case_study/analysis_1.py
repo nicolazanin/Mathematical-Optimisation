@@ -124,7 +124,7 @@ for i in ["max_cells", "max_pop"]:
         attractive_graph = get_attractive_graph(distances=airports_distances_alt, attractive_paths=attractive_paths)
 
         results[i][network] = [[], [], []]
-        for charging_airports_lim in range(8, 16):
+        for charging_airports_lim in range(2, 16):
             results[i][network][0].append(charging_airports_lim)
             settings.airports_config.charging_bases_lim = charging_airports_lim
             _logger.info("-------------- MILP Optimization --------------")
