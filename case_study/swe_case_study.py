@@ -149,10 +149,9 @@ if not settings.show_plot:
 else:
     _logger.info("-------------- Plot --------------")
     edges = []
-    y, psi, phi, rho, chi, z, w = get_model_variables(m)
-    for k, value in z.items():
-        if value > 0.5:
-            edges.append(ast.literal_eval(k[1:]))
+    for path in attractive_paths[active_path_indices]:
+        for id in range(len(path)-1):
+            edges.append([path[id], path[id+1]])
     edges = list({tuple(sorted(x)) for x in edges})
     edges = [list(x) for x in edges]
     plot_name = "test_{}_{}".format(settings.airports_config.charging_bases_lim,settings.aircraft_config.tau)
