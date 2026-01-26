@@ -57,7 +57,7 @@ for i in ["max_cells", "max_pop"]:
                                        population_cells_centroids.values.tolist()])
     results[i] = {}
 
-    for network in ["not_active"]:
+    for network in ["active", "not_active"]:
         results[i][network] = {}
         _logger.info("-------------- Initialize the airports dataset --------------")
         _logger.info("Airports dataset initialized from {}".format(airports_file))
