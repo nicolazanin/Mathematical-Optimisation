@@ -5,7 +5,6 @@ import pandas as pd
 import logging
 import time
 import os
-import ast
 import urllib.request
 
 from utils.init_dataset import get_activation_cost_airports, get_nodes_distances, get_population_cells_near_airports, \
@@ -53,7 +52,7 @@ population_density = np.array([pop_cell_centroid[2] for pop_cell_centroid in
 
 _logger.info("-------------- Initialize the airports dataset --------------")
 _logger.info("Airports dataset initialized from {}".format(airports_file))
-airports = get_airports(airports_file=airports_file, only_active=False)
+airports = get_airports(airports_file=airports_file, only_active=True)
 activation_costs = get_activation_cost_airports(num_airports=np.size(airports),
                                                 max_cost=settings.airports_config.max_cost,
                                                 min_cost=settings.airports_config.min_cost)

@@ -427,7 +427,7 @@ def great_circle_path(lat1, lon1, lat2, lon2, num_points=10):
     """
     lat1, lon1, lat2, lon2 = map(deg2rad, [lat1, lon1, lat2, lon2])
     delta_lon = lon2 - lon1
-    central_angle = np.arccos(np.sin(lat1) * np.sin(lat2) + np.cos(lat1) * np.cos(lat2) * np.cos(delta_lon)) * 10
+    central_angle = np.arccos(np.sin(lat1) * np.sin(lat2) + np.cos(lat1) * np.cos(lat2) * np.cos(delta_lon))
 
     lat = []
     lon = []

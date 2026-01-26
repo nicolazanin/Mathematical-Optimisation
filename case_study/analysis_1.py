@@ -5,7 +5,6 @@ import pandas as pd
 import logging
 import time
 import os
-import ast
 import urllib.request
 
 from utils.init_dataset import get_activation_cost_airports, get_nodes_distances, get_population_cells_near_airports, \
