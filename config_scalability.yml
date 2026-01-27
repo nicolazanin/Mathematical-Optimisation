@@ -27,7 +27,7 @@ paths_config:
   max_edges: 3 # maximum of 3 adjacent edges (maximum of 2 intermediate airports)
   routing_factor_thr: 1.4 # ratio between the path’s total flight distance and the nonstop flight distance
   res: 0 # Flight reserve factor
-  max_total_time_travel: 4 # this is the max total travel time threshold (ground access component + flight time)
+  max_total_time_travel: 10 # this is the max total travel time threshold (ground access component + flight time)
   min_ground_travel_time_to_destination_cell: 0   # this is the minimum ground transportation travel time form any
                                                   # population cell to a destination cell to consider the paths starting
                                                   # form that population cell as attractive
@@ -38,7 +38,7 @@ model_config:
   mu_2: 1 # weight of first objective function
   lexicographic: True # true if the model combines the two objective functions in a lexicographic order
   mip_gap: 0.000 # MIP gap termination condition value
-  max_run_time: 5000 # model maximum run time in seconds
+  max_run_time: 7000 # model maximum run time in seconds
 
 heuristic_config:
   enable: False # true if the kernel search heuristic is enabled.
