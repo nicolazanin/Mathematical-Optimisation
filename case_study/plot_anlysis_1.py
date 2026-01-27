@@ -1,8 +1,11 @@
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import pickle
+from pathlib import Path
 
-results = pickle.load(open('analysis_1.pkl', 'rb'))
+BASE_DIR = Path(__file__).resolve().parent
+
+results = pickle.load(open(BASE_DIR /'analysis_1.pkl', 'rb'))
 charging_bases = results["max_cells"]["active"][0]
 
 max_cells_curr = results["max_cells"]["active"][1]

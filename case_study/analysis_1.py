@@ -1,4 +1,5 @@
 import pickle
+from pathlib import Path
 import numpy as np
 from gurobipy import GRB
 import pandas as pd
@@ -26,12 +27,12 @@ _logger.setLevel(settings.logging_lvl)
 
 _logger.info("-------------- EACN-REG SWE analysis to investigate the trade-off between population coverage and number "
              "of charging bases starting --------------")
-
+BASE_DIR = Path(__file__).resolve().parent
 settings = settings.from_yaml("case_study/config_case_study.yml")
 url_airports_file = "https://github.com/nicolazanin/Mathematical-Optimisation/releases/latest/download/swe_airports.csv"
 url_pop_density_file = "https://github.com/nicolazanin/Mathematical-Optimisation/releases/latest/download/swe_pd_2019_1km_ASCII_XYZ.csv"
-airports_file = "swe_airports.csv"
-pop_density_file = "swe_pd_2019_1km_ASCII_XYZ.csv"
+airports_file = BASE_DIR / "swe_airports.csv"
+pop_density_file = BASE_DIR / "swe_pd_2019_1km_ASCII_XYZ.csv"
 
 if not os.path.exists(pop_density_file):
     _logger.info("Downloading latest population density file")
@@ -186,4 +187,4 @@ for i in ["max_cells", "max_pop"]:
                                 save_plot=True)
 
 pickle.dumps(results)
-pickle.dump(results, open('analysis_1.pkl', 'wb'))
+pickle.dump(results, open(BASE_DIR / 'analysis_1.pkl', 'wb'))

@@ -1,8 +1,11 @@
 import pickle
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from pathlib import Path
 
-results = pickle.load(open('analysis_2.pkl', 'rb'))
+BASE_DIR = Path(__file__).resolve().parent
+
+results = pickle.load(open(BASE_DIR / 'analysis_2.pkl', 'rb'))
 
 ttt_3_400_active = []
 for cell in sorted(results[3][400]["active"][3], key=lambda d: min(d['total_times'])):
