@@ -1,98 +1,122 @@
-# Mathematical Optimization
+# Electric Aircraft Charging Network Design for Regional Routes
 
-Project for the **Mathematical Optimization** exam.
+This repository contains the implementation of the **Electric Aircraft Charging Network for Regional Routes (EACN-REG)** model and the **Kernel Search (KS)** heuristic, as proposed in the following paper:
 
-Implementation of a series of Mixed-Integer Linear Programming (MILP) models based on the following paper:
-[**Electric aircraft charging network design for regional routes: A novel mathematical formulation and kernel search
-heuristic**](https://www.sciencedirect.com/science/article/pii/S037722172300125X)
+> **Kinene, A., Birolini, S., Cattaneo, M., & Granberg, T. A. (2023).**
+> *Electric aircraft charging network design for regional routes: A novel mathematical formulation and kernel search heuristic.*
+> European Journal of Operational Research, 309, 1300–1315.
+> [Read the paper](https://www.sciencedirect.com/science/article/pii/S037722172300125X)
 
-The project implements a **Mixed-Integer Linear Programming (MILP)** model to optimize the strategic location of
-charging infrastructure for electric aircraft.
-It addresses the fundamental problem of electric aviation: ensuring connectivity for regional routes while minimizing
-infrastructure investment costs.
+## Overview
 
-The solution includes:
+The project addresses the strategic problem of designing a charging infrastructure network for electric aviation. 
+It solves a **Mixed-Integer Linear Programming (MILP)** model to balance infrastructure investment costs against 
+regional connectivity and population coverage.
 
-1. **Preprocessing Logic:** To generate feasible flight paths based on range and passenger behavior.
-2. **Mathematical Model:** A novel formulation (EACN-REG) to solve the charging location problem.
-3. **Kernel Search Heuristic:** An efficient algorithm to solve large-scale instances (e.g., the Sweden case study).
+**Key Features:**
+* **EACN-REG Model:** A novel facility location formulation enforcing multi-hop flight feasibility and range constraints.
+* **Kernel Search Heuristic:** A decomposition-based heuristic to solve large-scale instances (e.g., country-wide networks) efficiently.
+* **Data Processing:** Utilities to generate population grids, process airport data, and filter flight paths based on passenger utility.
+* **Real-world Application:** A full case study implementation for Sweden.
 
 ---
 
-## Get Started
+## Installation
 
-This project uses **Python 3.13**.
+This project requires **Python 3.13**.
 
-#### Installing Required Packages
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd <repository-folder>
+    ```
 
-<ol>
-<li>
-Create a virtual environment:
+2.  **Create and activate a virtual environment:**
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate  # On Windows use: venv\Scripts\activate
+    ```
 
- ```
- python3 -m venv venv
- source venv/bin/activate 
- ```
+3.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-</li>
-<li>
-Install the required packages:
+---
 
-```
-pip install -r requirements.txt
-```
+## Usage Guide
 
-</li>
+The project is organized into three main modes of operation: Testing, Scalability Analysis, and the Sweden Case Study.
 
-<li>
-Run <em>test.py</em>:
+### 1. Quick Start (Synthetic Test)
+Runs the model on a small, randomly generated synthetic dataset to verify installation and logic.
+* **Command:** `python test.py`
+* **Configuration:** `config.yml`
+* **Output:** Logs to console/file and generates an HTML plot of the solution.
 
-```
-python test.py
-```
+### 2. Scalability Analysis (Section 4)
+Replicates the computational experiments from **Section 4** of the paper, comparing the exact Branch-and-Cut (B&C) solver against the Kernel Search heuristic.
+* **Command:** `python scalability.py`
+* **Configuration:** `config_scalability.yml` and `scalability_tests.yml`
+* **Output:** A CSV report (`EACN_REG_<timestamp>.csv`) containing solution times, objective values, and gaps for various instance sizes ($N=50, 100$) and ranges ($\tau=400, 600, 800$).
 
-</li>
-</ol>
+### 3. Sweden Case Study (Section 5)
+Runs the optimization on real-world data for Sweden. The script automatically downloads the required datasets (airports and population density) from the repository releases.
+* **Command:** `python swe_case_study.py`
+* **Configuration:** `case_study/config_case_study.yml`
+* **Output:** HTML plots visualizing the optimal charging network, covered population, and flight paths.
 
-# Code Architecture
+### 4. Advanced Trade-off Analysis
+Scripts to reproduce the sensitivity analyses discussed in the paper.
+* **Pareto Analysis:** Investigate the trade-off between population coverage and the number of charging bases.
+    ```bash
+    python -m case_study.analysis_1
+    ```
+* **Technological Sensitivity:** Investigate the impact of aircraft range ($\tau$) and travel time limits.
+    ```bash
+    python -m case_study.analysis_2
+    ```
 
-This section details how the codebase implements the specific methodologies described in the paper.
+---
 
-## 1. Data Generation & Preprocessing (Section 2)
+## Configuration
 
-Before the optimization begins, the model must define the input graph. Since a fully connected graph is
-computationally inefficient and unrealistic. Instead, it filters connections based on **aircraft range $\tau$** and
-**passenger utility**.
+The behavior of the model is controlled by YAML configuration files. Key parameters include:
 
-### Grid Generation (`utils/init_dataset.py`)
+| Section | Parameter | Description |
+| :--- | :--- | :--- |
+| **`aircraft_config`** | `tau` | Maximum aircraft range on a single charge (km). |
+| | `cruise_speed` | Aircraft speed (km/h). |
+| **`paths_config`** | `routing_factor_thr` | Max ratio of (Path Distance / Direct Distance) for a path to be attractive. |
+| | `max_total_time_travel` | Max allowed time (ground + flight) for a trip to be valid. |
+| **`heuristic_config`** | `enable` | Set `True` to use Kernel Search, `False` for exact solver. |
+| | `iterations` | Number of bucket iterations for the heuristic. |
+| **`model_config`** | `mu_1`, `mu_2` | Weights for the objective function (Connectivity vs Cost). |
 
-- Implements the discrete population grid $P$ and airport set $N$.
-- **Logic**:
-    - `cells_generation()` creates the square grid $K$.
-    - `get_pop_density()` assigns population values $\pi_k$.
+---
 
-### Feasible & Attractive Paths (`utils/preprocessing.py`)
+## Code Architecture & Paper Mapping
 
-- **Range Constraint**:
-    - The function `get_threshold_graph()` builds the graph $G = (N, \mathcal{E})$ where edges exist only
-      if $dist(i,j) ≤ \tau$.
+This codebase is structured to mirror the methodology described in the paper.
 
-- **Routing Factor Threshold**:
-    - The paper states that passengers will not choose a route if it is significantly longer than the direct
-      connection.  
-      **Implementation**: `get_attractive_paths_from_rft()` calculates the
-      ratio: $r_p = \frac{d_{direct}}{\sum d_{ij}}$.
-    - If $r_p > 1.4$ (default config), the path is discarded.
+### 1. Preprocessing (Section 2)
+* **Grid Generation:** `utils/init_dataset.py` creates the discrete population grid $K$ and assigns population $\pi_k$.
+* **Path Generation:** `utils/preprocessing.py` implements the filtering logic:
+    * **Range Constraint:** Builds graph $G$ where edges exist only if $d_{ij} \le \tau$.
+    * **Routing Factor:** Discards paths where $d_{path} > 1.4 \times d_{direct}$.
+    * **Time Limit:** Filters paths exceeding the 4-hour total travel time limit (Section 5).
 
-- **Total Travel Time**:
-    - As defined in the Case Study setup (Section 5), the model enforces a **4-hour limit** on total travel time (ground
-      access + flight + egress).
-    - **Implementation**: `get_population_cells_paths()` filters paths where:
-      $T_{\text{ground start}} + T_{\text{flight}} + T_{\text{ground end}} > T_{\text{max}}$
+### 2. Mathematical Model (Section 2 & 3)
+* **Formulation:** `model/utils_model.py` translates the MILP formulation into Gurobi constraints.
+    * Variables: $y_i$ (charging base), $z_{ij}$ (edge feasibility), $\rho_i$ (shortest path to base).
+    * **Valid Inequalities:** Implements the tightened "Big-M" constraints described in **Section 3.1.1** via `get_tight_big_m()`.
 
-## 2. The Mathematical Formulation (Section 2)
+### 3. Kernel Search Heuristic (Section 4)
+* **Algorithm:** `model/eanc_reg_model.py` implements **Algorithm 1**.
+    * `get_initial_kernel()`: Selects promising airports based on centrality.
+    * `solve_eacn_model()`: Iteratively solves restricted sub-problems (buckets) to refine the solution.
 
-The core logic resides in `model/utils_model.py`. This file translates the MILP formulation into Gurobi constraints.
+---
 
 | **Inputs: sets & parameters** |                                                                                                                 |
 |-------------------------------|-----------------------------------------------------------------------------------------------------------------|
@@ -118,111 +142,5 @@ The core logic resides in `model/utils_model.py`. This file translates the MILP 
 | $\psi_p \in \{0, 1\}$     | =1 if path $p$ can be used                             |
 | $\phi^d_k \in \{0, 1\}$   | =1 if area $k$ is covered w.r.t. destination $d$       |
 
-### Constraints
-
-- **Flow & Coverage**
-
-- **Recharging Logic**
-
-- **Range Limit**
 
 
-### Algorithmic Enhancements (Section 3.1.1)
-
-- To improve solver performance, the paper proposes **tightening the "Big-M" constants** used in the linear relaxation.
-- **Implementation**: `get_tight_big_m()` calculates specific upper bounds for `M_1, M_2, M_3` based on the graph
-  topology, instead of using generic infinite values.
-
-
-## 3. Kernel Search Heuristic (Section 4)
-
-For the Sweden case study, the problem size is too large for standard Branch-and-Cut.  
-The project implements **Algorithm 1** from the paper in `model/eanc_reg_model.py`.
-
-### Initialization
-
-- `get_initial_kernel()`: Selects a subset of "promising" airports based on the potential population they can serve.
-
-### Bucket Iteration
-
-- `get_buckets()`: Partitions the remaining airports into small buckets.
-- `solve_eacn_model()`: Iterates through these buckets, temporarily allowing variables in the current bucket to be
-  non-zero while fixing others, progressively improving the objective function value.
-
-# Running Experiments & Replication
-
-## 1. Scalability Analysis (Section 4)
-
-This experiment compares the computational efficiency of the exact B&C solver against the Kernel Search heuristic on
-synthetic datasets.
-
-- **Command**: 
-    ```
-    python scalability.py
-    ```
-- **Configuration**: Reads from `config_scalability.yml` and `scalability_tests.yml` .
-- **Process**:
-    - Generates random instances with $N=50$ and $N=100$ airports.
-    - Varies aircraft range $\tau \in {400,600,800}$.
-    - Varies $K$ set.
-    - Solves using B&C, KS (1 iteration), and KS (3 iterations).
-
-- **Output**: A CSV report containing solution times (sec), objective values, and optimality gaps.
-
-## 2. Sweden Case Study (Section 5)
-
-This utilizes real-world data (automatically downloaded from the repository releases) to optimize the network for
-Sweden.
-
-- **Command**: 
-    ```
-    python swe_case_study.py
-    ```
-- **Data Preparation**:
-
-    The script automatically fetches:
-    - swe_airports.csv: Active Swedish airports.
-    - swe_pd_2019_1km_ASCII_XYZ.csv: WorldPop population density data.
-- **Configuration**: Reads from `config_case_study.yml`.
-- **Process**:
-    - Solves using KS (3 iterations).
-- **Output**: Plot file with the dataset and solutions of the Sweden case study.
-
-## 3. Sweden Case Study Trade-off Analysis (Section 5)
-
-- **Command**: 
-    ```
-    python -m case_study.analysis_1.py.
-    ```
-- **Data Preparation**:
-
-    The script automatically fetches:
-    - swe_airports.csv: Active Swedish airports.
-    - swe_pd_2019_1km_ASCII_XYZ.csv: WorldPop population density data.
-- **Configuration**: Reads from `config_case_study.yml`.
-- **Process**:
-  - This script runs the optimization loop multiple times:
-    - Varies charging bases limit number.
-    - Varies airport network.
-  - Solves using KS (3 iterations) maximizing population covered or cells covered.
-- **Output**: Pickle file with the solutions of the Sweden case study.
-
-## 4. Sweden Case Study Sensitivity Analysis (Section 5)
-
-- **Command**: 
-    ```
-    python -m case_study.analysis_2.py.
-    ```
-- **Data Preparation**:
-
-    The script automatically fetches:
-    - swe_airports.csv: Active Swedish airports.
-    - swe_pd_2019_1km_ASCII_XYZ.csv: WorldPop population density data.
-- **Configuration**: Reads from `config_case_study.yml`.
-- **Process**:
-  - This script runs the optimization loop multiple times:
-    - Varies travel time threshold.
-    - Varies aircraft range $\tau.
-    - Varies airport network.
-  - Solves using KS (3 iterations) maximizing population covered or cells covered.
-- **Output**: Pickle file with the solutions of the Sweden case study.
