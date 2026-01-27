@@ -60,7 +60,7 @@ for total_time in [3, 4]:
         results[total_time][tau] = {}
         settings.aircraft_config.tau = tau
         settings.paths_config.routing_factor_thr = 1.4 if tau==400 else 1.2
-        for network in ["active", "non_active"]:
+        for network in ["active", "not_active"]:
             results[total_time][tau][network] = {}
             _logger.info("-------------- Initialize the airports dataset --------------")
             _logger.info("Airports dataset initialized from {}".format(airports_file))

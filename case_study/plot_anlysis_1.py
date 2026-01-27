@@ -10,18 +10,22 @@ charging_bases = results["max_cells"]["active"][0]
 
 max_cells_curr = results["max_cells"]["active"][1]
 max_cells_pop_curr = results["max_cells"]["active"][2]
+max_cells_full = results["max_cells"]["not_active"][1]
+max_cells_pop_full = results["max_cells"]["not_active"][2]
 
 max_pop_curr = results["max_pop"]["active"][1]
 max_pop_pop_curr = results["max_pop"]["active"][2]
+max_pop_full = results["max_pop"]["not_active"][1]
+max_pop_pop_full = results["max_pop"]["not_active"][2]
 
 fig = make_subplots(
     rows=2,
     cols=2,
     subplot_titles=[
         "(a) Maximize number of cells covered",
-        "(b) Maximize number of cells covered (population calculated ex-post)",
-        "(c) Maximize population covered",
-        "(d) Maximize population covered (population calculated ex-post)"
+        "(b) Maximize number of cells covered (population covered calculated ex-post)",
+        "(c) Maximize population covered (cells covered calculated ex-post)",
+        "(d) Maximize population covered"
     ]
 )
 
@@ -43,16 +47,16 @@ def add_line(fig, x, y, name, row, col, color, showlegend=False):
 
 
 add_line(fig, charging_bases, max_cells_curr, "Curr Ntw", 1, 1, "firebrick", showlegend=True)
-# add_line(fig, charging_bases, cells_full_1, "Full Ntw", 1, 1, "royalblue", showlegend=False)
+add_line(fig, charging_bases, max_cells_full, "Full Ntw", 1, 1, "royalblue", showlegend=True)
 
 add_line(fig, charging_bases, max_cells_pop_curr, "Curr Ntw", 1, 2, "firebrick")
-# add_line(fig, charging_bases, pop_full_1, "Full Ntw", 1, 2, "royalblue")
+add_line(fig, charging_bases, max_cells_pop_full, "Full Ntw", 1, 2, "royalblue")
 
 add_line(fig, charging_bases, max_pop_curr, "Curr Ntw", 2, 1, "firebrick")
-# add_line(fig, charging_bases, cells_full_2, "Full Ntw", 2, 1, "royalblue")
+add_line(fig, charging_bases, max_pop_full, "Full Ntw", 2, 1, "royalblue")
 
 add_line(fig, charging_bases, max_pop_pop_curr, "Curr Ntw", 2, 2, "firebrick")
-# add_line(fig, charging_bases, pop_full_2, "Full Ntw", 2, 2, "royalblue")
+add_line(fig, charging_bases, max_pop_pop_full, "Full Ntw", 2, 2, "royalblue")
 
 fig.update_xaxes(title_text="Nr. charging bases")
 fig.update_yaxes(title_text="Nr. cells", row=1, col=1)

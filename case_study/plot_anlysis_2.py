@@ -21,16 +21,16 @@ for cell in sorted(results[4][600]["active"][3], key=lambda d: min(d['total_time
     ttt_4_600_active.append([time * 60 for time in cell["total_times"]])
 
 ttt_3_400_not_active = []
-for cell in sorted(results[3][400]["non_active"][3], key=lambda d: min(d['total_times'])):
+for cell in sorted(results[3][400]["not_active"][3], key=lambda d: min(d['total_times'])):
     ttt_3_400_not_active.append([time * 60 for time in cell["total_times"]])
 ttt_3_600_not_active = []
-for cell in sorted(results[3][600]["non_active"][3], key=lambda d: min(d['total_times'])):
+for cell in sorted(results[3][600]["not_active"][3], key=lambda d: min(d['total_times'])):
     ttt_3_600_not_active.append([time * 60 for time in cell["total_times"]])
 ttt_4_400_not_active = []
-for cell in sorted(results[4][400]["non_active"][3], key=lambda d: min(d['total_times'])):
+for cell in sorted(results[4][400]["not_active"][3], key=lambda d: min(d['total_times'])):
     ttt_4_400_not_active.append([time * 60 for time in cell["total_times"]])
 ttt_4_600_not_active = []
-for cell in sorted(results[4][600]["non_active"][3], key=lambda d: min(d['total_times'])):
+for cell in sorted(results[4][600]["not_active"][3], key=lambda d: min(d['total_times'])):
     ttt_4_600_not_active.append([time * 60 for time in cell["total_times"]])
 
 titles = [
