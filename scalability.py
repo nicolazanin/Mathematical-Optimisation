@@ -43,7 +43,7 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int, ro
     _logger.info("-------------- routing_factor: {} --------------".format(settings.paths_config.routing_factor_thr))
 
     results = init_results_dict()
-    for i in range(5):
+    for i in range(3):
         results["test"].append(i)
         results["K"].append(settings.population_config.cells_x * settings.population_config.cells_y)
         results["N"].append(settings.airports_config.num)

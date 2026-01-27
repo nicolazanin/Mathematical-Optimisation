@@ -65,7 +65,7 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
     installation_cost = np.array([activation_costs[i] * y_vars[i] for i in attractive_airports]).sum()
 
     if ks:
-        m.setParam('TimeLimit', int(max_run_time/10))
+        m.setParam('TimeLimit', int(max_run_time/5))
         objective_expr = mu_1 * population_covered - mu_2 * installation_cost
         m.setObjective(objective_expr, GRB.MAXIMIZE)
         best_obj_constr = m.addConstr(objective_expr >= 0, name="best_obj_cut")
