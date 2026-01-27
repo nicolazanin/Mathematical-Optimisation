@@ -95,6 +95,44 @@ def get_population_cells(population_coords: np.ndarray) -> go.Scatter:
     return population_cell_markers
 
 
+def get_population_cells_covered_close_dest(population_coords: np.ndarray,
+                                            population_cells_covered_close_dest: list) -> go.Scatter:
+    """
+    Returns a Scatter object that shows the population cells.
+
+    Args:
+        population_coords (np.ndarray): A NumPy array of shape (num_population_cells, 2) containing (x, y) coordinates
+            of population cell centers.
+        population_cells_covered_close_dest (list): A list of population cells covered by nearby destination cells.
+    Returns:
+        go.Scatter: A Scatter object that shows the population cells covered by nearby destination cells..
+    """
+    labels = [str(num) for num in population_cells_covered_close_dest]
+    population_cell_markers = go.Scatter(
+        x=population_coords[population_cells_covered_close_dest][:, 0],
+        y=population_coords[population_cells_covered_close_dest][:, 1],
+        mode='markers',
+        marker=dict(
+            color='rgba(147, 112, 219, 0.5)',
+            size=8,
+            line=dict(
+                color='rgba(147, 112, 219, 1)',
+                width=1
+            ),
+            symbol="diamond"
+        ),
+        name='Population Cells Covered by Nearby Destination Cells',
+        customdata=labels,
+        showlegend=True,
+        hovertemplate="Population Cell: %{customdata}<br>"
+                      "Coordinates: %{x:.1f}km x %{y:.1f}km <extra></extra>",
+        legend="legend1",
+        legendrank=7
+    )
+
+    return population_cell_markers
+
+
 def get_destination_cells(population_coords: np.ndarray, destination_cells: list) -> go.Scatter:
     """
     Returns a Scatter object that shows the destination cells.
@@ -627,8 +665,8 @@ def plot_dataset_and_solution(population_coords: np.ndarray, population_density:
                               airports_coords: np.ndarray,
                               airport_distances: dict, graph_below_tau: nx.Graph, graph_above_tau: nx.Graph,
                               destination_airports: np.ndarray, destination_cells: list, max_ground_distance: float,
-                              min_distance_to_destination_cells: float, all_paths: np.ndarray,
-                              attractive_paths: np.ndarray,
+                              min_distance_to_destination_cells: float, population_cells_covered_close_dest: list,
+                              all_paths: np.ndarray, attractive_paths: np.ndarray,
                               population_cells_paths: dict, charging_airports: list, active_path_indices: np.ndarray,
                               plot_name: str,
                               simple_plot_enable: bool, save_plot: bool) -> None:
@@ -651,6 +689,7 @@ def plot_dataset_and_solution(population_coords: np.ndarray, population_density:
         max_ground_distance (float): Maximum allowed ground distance to consider a population cell "near" an airport.
         min_distance_to_destination_cells(float): Minimum allowed distance to consider a population cell or an airport
             from the destination cells (km).
+        population_cells_covered_close_dest (list): A list of population cells covered by nearby destination cells.
         all_paths (np.ndarray): A NumPy array of all paths (each path is a list of node IDs).
         attractive_paths (np.ndarray):  A NumPy array of attractive paths (each path is a list of node IDs).
         population_cells_paths (dict):  A dictionary mapping each population cell index to a list of paths (each path is
@@ -674,6 +713,10 @@ def plot_dataset_and_solution(population_coords: np.ndarray, population_density:
 
     population_cell_markers = get_population_cells(population_coords=population_coords)
     fig.add_trace(population_cell_markers)
+
+    population_cell_covered_close_dest = get_population_cells_covered_close_dest(population_coords=population_coords,
+                                                                                 population_cells_covered_close_dest=population_cells_covered_close_dest)
+    fig.add_trace(population_cell_covered_close_dest)
 
     destination_cell_markers = get_destination_cells(population_coords=population_coords,
                                                      destination_cells=destination_cells)

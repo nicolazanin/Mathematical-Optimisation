@@ -72,13 +72,6 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
         best_obj_val = 0
         best_obj_constr.RHS = best_obj_val
 
-        bucket_constrs = {}
-
-        for airport in attractive_airports:
-            c = m.addConstr(y_vars[airport] <= 0, name=f"bucket_fix_{airport}")
-            c.setAttr(GRB.Attr.RHS, 1)
-            bucket_constrs[airport] = c
-
         kernel = get_initial_kernel(population_cells_paths=population_cells_paths,
                                     initial_kernel_size=initial_kernel_size)
         best_obj_val = 0
@@ -90,11 +83,11 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
                     _logger.info("-------------- Kernel search {} iteration, {} bucket--------------".
                                  format(str(iteration + 1), str(bucket_id + 1)))
                     candidates_airports = kernel + bucket
-                    not_candidates_airports = list(set(attractive_airports) - set(candidates_airports))
-                    for c in bucket_constrs.values():
-                        c.RHS = 1
-                    for airport in not_candidates_airports:
-                        bucket_constrs[airport].RHS = 0
+                    for airport in attractive_airports:
+                        if airport not in candidates_airports :
+                            y_vars[airport].UB = 0.0
+                        else:
+                            y_vars[airport].UB = 1.0
                     best_obj_constr.RHS = best_obj_val
                     m.optimize()
                     if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
@@ -115,6 +108,6 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
             m.setObjective(objective_func, GRB.MAXIMIZE)
             m.optimize()
 
-       # m.write("EACN_REG_model.lp")
+    # m.write("EACN_REG_model.lp")
 
     return m, time.time() - start_time

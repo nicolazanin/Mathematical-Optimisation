@@ -132,12 +132,14 @@ m, time_exec = solve_eacn_model(population_density=population_density,
                                 buckets_size=settings.heuristic_config.buckets_size,
                                 iterations=settings.heuristic_config.iterations,
                                 max_run_time=settings.model_config.max_run_time)
+population_cells_covered_close_dest = [int(cell) for cells in population_cells_too_close_to_destination_cells.values()
+                                       for cell in cells]
 charging_airports = []
 active_path_indices = []
-population_covered = [int(cell) for cells in population_cells_too_close_to_destination_cells.values() for cell in cells]
+population_covered = []
 if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
     charging_airports, population_from_dest, active_path_indices, bound = get_outputs_from_model(m)
-    population_covered = population_covered + population_from_dest
+    population_covered = population_cells_covered_close_dest + population_from_dest
     _logger.info("Charging airports: {} ({})".format(str(charging_airports), len(charging_airports)))
     _logger.info("Population covered: {} ({})".format(str(population_covered), len(population_covered)))
 else:
@@ -149,11 +151,11 @@ else:
     _logger.info("-------------- Plot --------------")
     edges = []
     for path in attractive_paths[active_path_indices]:
-        for id in range(len(path)-1):
-            edges.append([path[id], path[id+1]])
+        for id in range(len(path) - 1):
+            edges.append([path[id], path[id + 1]])
     edges = list({tuple(sorted(x)) for x in edges})
     edges = [list(x) for x in edges]
-    plot_name = "test_{}_{}".format(settings.airports_config.charging_bases_lim,settings.aircraft_config.tau)
+    plot_name = "test_{}_{}".format(settings.airports_config.charging_bases_lim, settings.aircraft_config.tau)
     plot_case_study(population_cells=population_cells,
                     population_cells_centroids=population_cells_centroids,
                     airports=airports,

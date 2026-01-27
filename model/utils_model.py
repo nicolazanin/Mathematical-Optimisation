@@ -87,7 +87,7 @@ def model(airports: list, paths: np.ndarray, graph: nx.Graph, population_cells_p
             else:
                 m.addConstr(phi[pop_cell, dest_cell] == 0)
 
-    m.addConstr(gp.quicksum(y[i] for i in airports) <= charging_bases_lim, name="limit_charging_bases")
+    m.addConstr(gp.quicksum(y[i] for i in airports) <= charging_bases_lim)
 
     m.update()
 
@@ -186,17 +186,7 @@ def get_buckets(airports: list, kernel: list, bucket_size: int) -> dict:
     return buckets
 
 
-def get_outputs_from_model(m):
-    y, psi, phi, rho, chi, z, w = get_model_variables(m)
-
-    charging_airports = [int(name[2:-1]) for name, value in y.items() if value == 1]
-    population_covered = sorted([eval(name[4:-1])[0] for name, value in phi.items() if value > 0.99])
-    active_path_indices = np.array([int(name[4:-1]) for name, value in psi.items() if value == 1])
-
-    return charging_airports, population_covered, active_path_indices, m.ObjBound
-
-
-def get_model_variables(m: gp.Model) -> tuple:
+def get_outputs_from_model(m: gp.Model) -> tuple:
     """
     Extract variables from the model.
 
@@ -204,29 +194,16 @@ def get_model_variables(m: gp.Model) -> tuple:
         m (gp.Model): The Gurobi model to extract variables from.
 
     Returns:
-        tuple: A tuple containing lists of model variables.
+        tuple: A tuple containing lists of charging airports indexes, population covered indices, active path indices
+            and the last optimization bound from the model.
     """
     all_vars = m.getVars()
     y_vars = [v for v in all_vars if v.VarName.startswith('y')]
     psi_vars = [v for v in all_vars if v.VarName.startswith('psi')]
     phi_vars = [v for v in all_vars if v.VarName.startswith('phi')]
-    rho_vars = [v for v in all_vars if v.VarName.startswith('rho')]
-    chi_vars = [v for v in all_vars if v.VarName.startswith('chi')]
-    z_vars = [v for v in all_vars if v.VarName.startswith('z')]
-    w_vars = [v for v in all_vars if v.VarName.startswith('w')]
 
-    psi = vars_to_dict(psi_vars)
-    y = vars_to_dict(y_vars)
-    phi = vars_to_dict(phi_vars)
-    rho = vars_to_dict(rho_vars)
-    chi = vars_to_dict(chi_vars)
-    z = vars_to_dict(z_vars)
-    w = vars_to_dict(w_vars)
+    charging_airports = [int(var.VarName[2:-1]) for var in y_vars if var.X > 0.5]
+    population_covered = sorted([eval(var.VarName[4:-1])[0] for var in phi_vars if var.X > 0.5])
+    active_path_indices = np.array([int(var.VarName[4:-1]) for var in psi_vars if var.X > 0.5])
 
-    return y, psi, phi, rho, chi, z, w
-
-
-def vars_to_dict(var_list):
-    return {v.VarName: v.X for v in var_list }
-
-
+    return charging_airports, population_covered, active_path_indices, m.ObjBound

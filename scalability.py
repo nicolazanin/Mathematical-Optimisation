@@ -156,14 +156,15 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int, ro
                                             buckets_size=settings.heuristic_config.buckets_size,
                                             iterations=settings.heuristic_config.iterations,
                                             max_run_time=settings.model_config.max_run_time)
-
+            population_cells_covered_close_dest = [int(cell) for cells in
+                                                   population_cells_too_close_to_destination_cells.values()
+                                                   for cell in cells]
             charging_airports = []
-            population_covered = [int(cell) for cells in population_cells_too_close_to_destination_cells.values() for
-                                  cell in cells]
+            population_covered = []
             bound = 0
             if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
                 charging_airports, population_from_dest, active_path_indices, bound = get_outputs_from_model(m)
-                population_covered = population_covered + population_from_dest
+                population_covered = population_cells_covered_close_dest + population_from_dest
                 _logger.info("Charging airports: {} ({})".format(str(charging_airports), len(charging_airports)))
                 _logger.info("Population covered: {} ({})".format(str(population_covered), len(population_covered)))
             else:
