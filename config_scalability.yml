@@ -42,8 +42,8 @@ model_config:
 
 heuristic_config:
   enable: False # true if the kernel search heuristic is enabled.
-  initial_kernel_size: 5 # kernel search heuristic initial kernel size
-  buckets_size: 10 # kernel search heuristic buckets size
+  initial_kernel_size: 3 # kernel search heuristic initial kernel size
+  buckets_size: 6 # kernel search heuristic buckets size
   iterations: 3 # kernel search heuristic total iterations
 
 random_seed: 0

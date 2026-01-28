@@ -97,6 +97,7 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
                         best_obj_val = m.ObjVal
     else:
         if lexicographic:
+            _logger.info("-------------- EACN-REG lexicographic order starting --------------")
             m.setObjective(mu_1 * population_covered, GRB.MAXIMIZE)
             m.optimize()
             best_obj_val = m.ObjVal
@@ -104,6 +105,7 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
             m.addConstr(population_covered >= best_obj_val)
             m.optimize()
         else:
+            _logger.info("-------------- EACN-REG blending approach starting --------------")
             objective_func = (mu_1 * population_covered - mu_2 * installation_cost)
             m.setObjective(objective_func, GRB.MAXIMIZE)
             m.optimize()
