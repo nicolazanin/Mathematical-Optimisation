@@ -14,7 +14,7 @@ from utils.preprocessing import (get_threshold_graph, get_attractive_paths_from_
                                  get_population_cells_paths, get_population_cells_too_close_to_destination_cells,
                                  get_attractive_paths, get_attractive_graph,
                                  get_airports_too_close_to_destination_cells)
-from model.utils_model import get_outputs_from_model, get_model_variables
+from model.utils_model import get_outputs_from_model
 from model.eanc_reg_model import solve_eacn_model
 from utils.case_study_utils import (get_airports, get_population_cells, get_population_cells_centroids, plot_case_study)
 from utils.settings import settings, setup_logging
@@ -166,5 +166,5 @@ for total_time in [3, 4]:
             results[total_time][tau][network][3] = [population_cells_paths[cell] for cell in population_cells_paths if
                                                     cell in population_from_dest]
 
-pickle.dumps(results)
+
 pickle.dump(results, open(BASE_DIR / 'analysis_2.pkl', 'wb'))

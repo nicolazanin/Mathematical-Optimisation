@@ -186,5 +186,5 @@ for i in ["max_cells", "max_pop"]:
                                 plot_name=plot_name,
                                 save_plot=True)
 
-pickle.dumps(results)
+
 pickle.dump(results, open(BASE_DIR / 'analysis_1.pkl', 'wb'))
