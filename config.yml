@@ -1,0 +1,54 @@
+population_config:
+  cells_x: 10   # To achieve maximum scalability, the grid is built using the number of cells along the X and Y axes,
+  cells_y: 10   # as well as the area of a single cell.
+  cell_area: 4500 # total area of 450,000 square kilometers
+  min_density: 1
+  max_density: 5000
+  high_population_cells: [78, 22, 71]
+  destination_cells: [22]
+
+airports_config:
+  num: 15
+  min_distance: 30 # km
+  min_cost: 1
+  max_cost: 10
+  additional_airport_coords: [[240, 420], [160,579], [120, 569], [20, 70]]
+  charging_bases_lim: 6
+
+aircraft_config:
+  tau: 400 # maximum travel range on a single charge
+  cruise_speed: 400 # km per hours
+
+ground_access_config:
+  max_time: 90 # min
+  avg_speed: 60 # km per hours
+
+paths_config:
+  max_edges: 3 # maximum of 3 adjacent edges (maximum of 2 intermediate airports)
+  routing_factor_thr: 1.4 # ratio between the path’s total flight distance and the nonstop flight distance
+  res: 0.05 # Flight reserve factor
+  max_total_time_travel: 4 # this is the max total travel time threshold (ground access component + flight time)
+  min_ground_travel_time_to_destination_cell: 2   # this is the minimum ground transportation travel time form any
+                                                  # population cell to a destination cell to consider the paths starting
+                                                  # form that population cell as attractive
+
+model_config:
+  epsilon: 30 # small positive number to define big-M parameters
+  mu_1: 1 # weight of first objective function
+  mu_2: 0.01 # weight of first objective function
+  lexicographic: True # true if the model combines the two objective functions in a lexicographic order
+  mip_gap: 0.000 # MIP gap termination condition value
+  max_run_time: 200 # model maximum run time in seconds
+
+heuristic_config:
+  enable: False # true if the kernel search heuristic is enabled.
+  initial_kernel_size: 5 # kernel search heuristic initial kernel size
+  buckets_size: 10 # kernel search heuristic buckets size
+  iterations: 3 # kernel search heuristic total iterations
+
+random_seed: 559
+logging_lvl: 10 # 10: debug; 20: info
+print_logs: False
+show_plot: True
+simple_plot_enable: False # true to plot minimum information
+save_plot: False
