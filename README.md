@@ -54,6 +54,14 @@ Runs the model on a small, randomly generated synthetic dataset to verify instal
 * **Configuration:** `config.yml`
 * **Output:** Logs to console/file and generates an HTML plot of the solution.
 
+
+
+https://github.com/user-attachments/assets/8c4e3e2f-3b64-433c-aa29-81b4b03c40f4
+
+
+
+
+
 ### 2. Scalability Analysis (Section 4)
 Replicates the computational experiments from **Section 4** of the paper, comparing the exact Branch-and-Cut (B&C) solver against the Kernel Search heuristic.
 * **Command:** `python scalability.py`
@@ -65,6 +73,12 @@ Runs the optimization on real-world data for Sweden. The script automatically do
 * **Command:** `python swe_case_study.py`
 * **Configuration:** `case_study/config_case_study.yml`
 * **Output:** HTML plots visualizing the optimal charging network, covered population, and flight paths.
+
+
+
+https://github.com/user-attachments/assets/a61a28ff-6ce6-4f7c-be54-3ae6493c0cc8
+
+
 
 ### 4. Advanced Trade-off Analysis
 Scripts to reproduce the sensitivity analyses discussed in the paper.
