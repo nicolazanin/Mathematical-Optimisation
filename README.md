@@ -86,10 +86,15 @@ Scripts to reproduce the sensitivity analyses discussed in the paper.
     ```bash
     python -m case_study.analysis_1
     ```
+    <img width="1906" height="1068" alt="plot_analysis_1" src="https://github.com/user-attachments/assets/b26c7e7e-214f-4322-874b-ea29c662af0c" />
+
 * **Technological Sensitivity:** Investigate the impact of aircraft range ($\tau$) and travel time limits.
     ```bash
     python -m case_study.analysis_2
     ```
+    <img width="1911" height="1092" alt="plot_analysis_2" src="https://github.com/user-attachments/assets/cf818538-db9a-4581-bd24-15ceceac32d5" />
+
+    
 
 ---
 
