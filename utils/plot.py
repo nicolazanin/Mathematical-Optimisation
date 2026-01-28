@@ -824,7 +824,7 @@ def plot_dataset_and_solution(population_coords: np.ndarray, population_density:
             xref="container",
             yref="container",
             xanchor="left",
-            x=0.85,
+            x=0.8,
             y=0.9,
         ),
         legend2=dict(
@@ -838,7 +838,7 @@ def plot_dataset_and_solution(population_coords: np.ndarray, population_density:
             xref="container",
             yref="container",
             xanchor="left",
-            x=0.85,
+            x=0.8,
             y=0.7,
         ),
         legend3=dict(
@@ -854,7 +854,7 @@ def plot_dataset_and_solution(population_coords: np.ndarray, population_density:
             maxheight=0.5,
             xanchor="left",
             yanchor="top",
-            x=0.85,
+            x=0.8,
             y=0.6,
         ),
         legend4=dict(
@@ -870,7 +870,7 @@ def plot_dataset_and_solution(population_coords: np.ndarray, population_density:
             maxheight=0.5,
             xanchor="left",
             yanchor="top",
-            x=0.85,
+            x=0.8,
             y=0.6,
         ),
         legend5=dict(
@@ -885,7 +885,7 @@ def plot_dataset_and_solution(population_coords: np.ndarray, population_density:
             yref="container",
             xanchor="left",
             yanchor="top",
-            x=0.85,
+            x=0.8,
             y=0.09,
         ),
 
@@ -895,14 +895,12 @@ def plot_dataset_and_solution(population_coords: np.ndarray, population_density:
             showgrid=False,
             zeroline=False,
             ticksuffix="km",
-            range=x_range,
 
         ),
         yaxis=dict(
             showgrid=False,
             zeroline=False,
             ticksuffix="km",
-            range=y_range
         ),
         updatemenus=[
             dict(

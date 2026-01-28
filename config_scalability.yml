@@ -38,7 +38,7 @@ model_config:
   mu_2: 1 # weight of first objective function
   lexicographic: True # true if the model combines the two objective functions in a lexicographic order
   mip_gap: 0.000 # MIP gap termination condition value
-  max_run_time: 1000 # model maximum run time in seconds
+  max_run_time: 2000 # model maximum run time in seconds
 
 heuristic_config:
   enable: False # true if the kernel search heuristic is enabled.
