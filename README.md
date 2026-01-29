@@ -126,10 +126,11 @@ This codebase is structured to mirror the methodology described in the paper.
     * **Valid Inequalities:** Implements the tightened "Big-M" constraints described in **Section 3.1.1** via `get_tight_big_m()`.
 
 ### 3. Kernel Search Heuristic (Section 4)
-* **Algorithm:** `model/eanc_reg_model.py` implements **Algorithm 1**.
-    * `get_initial_kernel()`: Selects promising airports based on centrality.
-    * `solve_eacn_model()`: Iteratively solves restricted sub-problems (buckets) to refine the solution.
 
+* **Algorithm:** `model/eanc_reg_model.py` implements **Algorithm 1**.
+    * `get_initial_kernel()`: Selects promising airports based on a **cost-efficiency ratio** (Unique Population Cells Served / Activation Cost). 
+      > **Note:** This implementation introduces cost-awareness to the initialization strategy to prioritize high-ROI airports. This is a custom enhancement and differs from the strictly centrality-based ranking (coverage count only) proposed in the original paper.
+    * `solve_eacn_model()`: Iteratively solves restricted sub-problems (buckets) to refine the solution.
 ---
 
 | **Inputs: sets & parameters** |                                                                                                                 |

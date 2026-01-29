@@ -11,7 +11,7 @@ airports_config:
   num: 0
   min_distance: 0
   min_cost: 1
-  max_cost: 1
+  max_cost: 10
   additional_airport_coords: []
   charging_bases_lim: 9
 
@@ -39,7 +39,7 @@ model_config:
   mu_2: 0.01 # weight of first objective function
   lexicographic: False # true if the model combines the two objective functions in a lexicographic order
   mip_gap: 0.000 # MIP gap termination condition value
-  max_run_time: 5000 # model maximum run time in seconds
+  max_run_time: 1000 # model maximum run time in seconds
 
 heuristic_config:
   enable: True # true if the kernel search heuristic is enabled.

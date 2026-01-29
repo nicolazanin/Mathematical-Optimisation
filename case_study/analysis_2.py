@@ -152,6 +152,7 @@ for total_time in [3, 4]:
             active_path_indices = []
             population_covered = [int(cell) for cells in population_cells_too_close_to_destination_cells.values() for
                                   cell in cells]
+            population_from_dest = []
             if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
                 charging_airports, population_from_dest, active_path_indices, bound = get_outputs_from_model(m)
                 population_covered = population_covered + population_from_dest

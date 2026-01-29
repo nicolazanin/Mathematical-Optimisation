@@ -2,7 +2,8 @@ import datetime
 import pandas as pd
 import logging
 import geopandas as gpd
-from shapely.geometry import Point, box
+from pathlib import Path
+from shapely.geometry import box
 import plotly.express as px
 import numpy as np
 from pyproj import Transformer
@@ -63,12 +64,35 @@ class Airport:
         self.passengers = passengers if passengers is not None else 0
         self.curr_active = True if passengers else False
         self.activation_cost = 0
+        self.max_passengers = 1000000
         x_m, y_m = transformer2xy.transform(lon, lat)
         self.x, self.y = x_m / 1000, y_m / 1000
 
     def __str__(self):
         return f"Airport Name: {self.airport_name}<br>ICAO: {self.icao}<br>IATA: {self.iata}<br>" \
                f"Runways: {self.runways}<br>Location: ({self.lat:.3f}°N, {self.lon:.3f}°E)<br>Annual Passengers: {self.passengers:.0f}"
+
+    def set_activation_cost(self, min_cost: int, max_cost: int) -> int:
+        """
+        Sets the activation cost of the airport.
+        Args:
+            min_cost (int): Minimum activation cost.
+            max_cost (int): Maximum activation cost.
+        Returns:
+            int: Activation cost.
+        """
+        if min_cost == max_cost:
+            self.activation_cost = min_cost
+        else:
+            if self.passengers <= 0:
+                self.activation_cost = 10
+
+            ratio = min(self.passengers / self.max_passengers, 1.0)
+            cost = 10 - 9 * ratio
+
+            self.activation_cost = int(cost)
+
+        return self.activation_cost
 
 
 def parse_runways(runways: str) -> list:
@@ -90,12 +114,12 @@ def parse_runways(runways: str) -> list:
     return runways_list
 
 
-def get_airports(airports_file: str, only_active: bool) -> np.ndarray:
+def get_airports(airports_file: Path, only_active: bool) -> np.ndarray:
     """
     Generates a list of Airports from airports list .csv file.
 
     Args:
-        airports_file (str): Path to the airports list .csv file.
+        airports_file (Path): Path to the airports list .csv file.
         only_active (bool): True if only active airports will be returned.
 
     Returns:

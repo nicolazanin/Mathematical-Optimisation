@@ -74,7 +74,7 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
         best_obj_constr.RHS = best_obj_val
 
         kernel = get_initial_kernel(population_cells_paths=population_cells_paths,
-                                    initial_kernel_size=initial_kernel_size)
+                                    initial_kernel_size=initial_kernel_size, activation_costs=activation_costs)
         best_obj_val = 0
         _logger.info("-------------- EACN-REG kernel search starting --------------")
         for iteration in range(iterations):

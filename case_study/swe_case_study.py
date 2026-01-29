@@ -53,9 +53,8 @@ population_density = np.array([pop_cell_centroid[2] for pop_cell_centroid in
 _logger.info("-------------- Initialize the airports dataset --------------")
 _logger.info("Airports dataset initialized from {}".format(airports_file))
 airports = get_airports(airports_file=airports_file, only_active=True)
-activation_costs = get_activation_cost_airports(num_airports=np.size(airports),
-                                                max_cost=settings.airports_config.max_cost,
-                                                min_cost=settings.airports_config.min_cost)
+activation_costs = np.array([airport.set_activation_cost(max_cost=settings.airports_config.max_cost,
+                                                min_cost=settings.airports_config.min_cost) for airport in airports])
 airports_coords = np.array([(airport.x, airport.y) for airport in airports])
 airports_distances_alt = get_nodes_distances_alt(nodes_coords=airports_coords, res=settings.paths_config.res)
 
@@ -143,6 +142,7 @@ if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
     population_covered = population_cells_covered_close_dest + population_from_dest
     _logger.info("Charging airports: {} ({})".format(str(charging_airports), len(charging_airports)))
     _logger.info("Population covered: {} ({})".format(str(population_covered), len(population_covered)))
+    _logger.info("Charging airports cost: {}".format(sum([activation_costs[airport] for airport in charging_airports])))
 else:
     _logger.info("No solution was found. Status:".format(m.Status))
 

@@ -131,7 +131,7 @@ def get_tight_big_m(graph, tau, epsilon) -> tuple:
     return m1_vals, m2_vals, m3_vals
 
 
-def get_initial_kernel(population_cells_paths: dict, initial_kernel_size: int) -> list:
+def get_initial_kernel(population_cells_paths: dict, initial_kernel_size: int, activation_costs:np.ndarray) -> list:
     """
     Generates the initial kernel for the KS heuristic. For each airport nodes computes the number of population
     cells that could be served based on the paths that go through it, then ranks the airports in descending order and
@@ -142,6 +142,8 @@ def get_initial_kernel(population_cells_paths: dict, initial_kernel_size: int) -
             a list of node IDs) starting from an airport near that population cell and a list of total travel times for
             each path.
         initial_kernel_size (int): # Kernel search heuristic initial kernel size.
+        activation_costs (np.ndarray): A NumPy array of activation costs for each airport (based on 'min_cost' and
+            'max_cost').
 
     Returns:
         list: A list of airports nodes IDs chosen for the initial kernel.
@@ -154,8 +156,8 @@ def get_initial_kernel(population_cells_paths: dict, initial_kernel_size: int) -
 
     airport_scores = {}
     for airport_id, population_cells_served in airport_served_pops.items():
-        score = len(population_cells_served)
-        airport_scores[airport_id] = score
+        score = len(set(population_cells_served))
+        airport_scores[airport_id] = score / activation_costs[airport_id]
 
     sorted_airports = sorted(airport_scores.items(), key=lambda item: item[1], reverse=True)
 
