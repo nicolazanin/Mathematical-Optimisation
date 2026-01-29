@@ -45,6 +45,7 @@ heuristic_config:
   initial_kernel_size: 5 # kernel search heuristic initial kernel size
   buckets_size: 10 # kernel search heuristic buckets size
   iterations: 3 # kernel search heuristic total iterations
+  max_no_improv_counter: 3
 
 random_seed: 559
 logging_lvl: 10 # 10: debug; 20: info

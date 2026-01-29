@@ -68,7 +68,7 @@ class HeuristicConfig:
     initial_kernel_size: int
     buckets_size: int
     iterations: int
-
+    max_no_improv_counter: int
 
 @dataclass
 class Settings:
