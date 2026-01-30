@@ -83,12 +83,13 @@ class Airport:
         """
         if min_cost == max_cost:
             self.activation_cost = min_cost
+            return self.activation_cost
         else:
             if self.passengers <= 0:
-                self.activation_cost = 10
+                self.activation_cost = max_cost
 
             ratio = min(self.passengers / self.max_passengers, 1.0)
-            cost = 10 - 9 * ratio
+            cost = max_cost - (max_cost - min_cost) * ratio
 
             self.activation_cost = int(cost)
 
