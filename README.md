@@ -66,7 +66,10 @@ https://github.com/user-attachments/assets/8c4e3e2f-3b64-433c-aa29-81b4b03c40f4
 Replicates the computational experiments from **Section 4** of the paper, comparing the exact Branch-and-Cut (B&C) solver against the Kernel Search heuristic.
 * **Command:** `python scalability.py`
 * **Configuration:** `config_scalability.yml` and `scalability_tests.yml`
-* **Output:** A CSV report (`EACN_REG_<timestamp>.csv`) containing solution times, objective values, and gaps for various instance sizes ($N=50, 100$) and ranges ($\tau=400, 600, 800$).
+* **Output:** A CSV report (`EACN_REG_<timestamp>.csv`) containing solution times, objective values, and gaps for various instance sizes ($N=40, 80$) and ranges ($\tau=400, 600$).
+
+<img width="4947" height="1835" alt="Immagine4" src="https://github.com/user-attachments/assets/c0f7a881-6988-4597-90f1-e0ef80d19c9b" />
+
 
 ### 3. Sweden Case Study (Section 5)
 Runs the optimization on real-world data for Sweden. The script automatically downloads the required datasets (airports and population density) from the repository releases.
