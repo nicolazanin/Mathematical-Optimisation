@@ -96,10 +96,10 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
                         charging_airports, population_covered, active_path_indices, _ = get_outputs_from_model(m)
                         kernel = kernel + [charging_airport for charging_airport in charging_airports
                                            if charging_airport not in kernel]
-                        if m.ObjVal > best_obj_val + 1e-4:
+                        if m.ObjVal > best_obj_val + 1e-3:
                             best_obj_val = m.ObjVal
                             no_improv_counter = 0
-                        else:
+                        elif m.ObjVal > 1e-3:
                             no_improv_counter += 1
                     else:
                         no_improv_counter += 1
