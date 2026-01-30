@@ -95,7 +95,7 @@ Scripts to reproduce the sensitivity analyses discussed in the paper.
     ```bash
     python -m case_study.analysis_2
     ```
-    <img width="1911" height="1092" alt="plot_analysis_2" src="https://github.com/user-attachments/assets/cf818538-db9a-4581-bd24-15ceceac32d5" />
+    <img width="2135" height="1153" alt="newplot(5)" src="https://github.com/user-attachments/assets/2b614cac-b941-43a4-a5df-ca64f34ea8f3" />
 
     
 
