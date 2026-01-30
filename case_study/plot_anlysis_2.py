@@ -7,41 +7,53 @@ BASE_DIR = Path(__file__).resolve().parent
 
 results = pickle.load(open(BASE_DIR / 'analysis_2.pkl', 'rb'))
 
-ttt_3_400_active = []
+ttt_3_400_active = [[], results[3][400]["active"][0], results[3][400]["active"][1], results[3][400]["active"][2], 0]
 for cell in sorted(results[3][400]["active"][3], key=lambda d: min(d['total_times'])):
-    ttt_3_400_active.append([time * 60 for time in cell["total_times"]])
-ttt_3_600_active = []
+    ttt_3_400_active[0].append([time * 60 for time in cell["total_times"]])
+ttt_3_400_active[4] = sum(sublist[0] for sublist in ttt_3_400_active[0]) / len(ttt_3_400_active[0])
+ttt_3_600_active = [[], results[3][600]["active"][0], results[3][600]["active"][1], results[3][600]["active"][2], 0]
 for cell in sorted(results[3][600]["active"][3], key=lambda d: min(d['total_times'])):
-    ttt_3_600_active.append([time * 60 for time in cell["total_times"]])
-ttt_4_400_active = []
+    ttt_3_600_active[0].append([time * 60 for time in cell["total_times"]])
+ttt_3_600_active[4] = sum(sublist[0] for sublist in ttt_3_600_active[0]) / len(ttt_3_600_active[0])
+ttt_4_400_active = [[], results[4][400]["active"][0], results[4][400]["active"][1], results[4][400]["active"][2], 0]
 for cell in sorted(results[4][400]["active"][3], key=lambda d: min(d['total_times'])):
-    ttt_4_400_active.append([time * 60 for time in cell["total_times"]])
-ttt_4_600_active = []
+    ttt_4_400_active[0].append([time * 60 for time in cell["total_times"]])
+ttt_4_400_active[4] = sum(sublist[0] for sublist in ttt_4_400_active[0]) / len(ttt_4_400_active[0])
+ttt_4_600_active = [[], results[4][600]["active"][0], results[4][600]["active"][1], results[4][600]["active"][2], 0]
 for cell in sorted(results[4][600]["active"][3], key=lambda d: min(d['total_times'])):
-    ttt_4_600_active.append([time * 60 for time in cell["total_times"]])
+    ttt_4_600_active[0].append([time * 60 for time in cell["total_times"]])
+ttt_4_600_active[4] = sum(sublist[0] for sublist in ttt_4_600_active[0]) / len(ttt_4_600_active[0])
 
-ttt_3_400_not_active = []
+ttt_3_400_not_active = [[], results[3][400]["not_active"][0], results[3][400]["not_active"][1],
+                        results[3][400]["not_active"][2], 0]
 for cell in sorted(results[3][400]["not_active"][3], key=lambda d: min(d['total_times'])):
-    ttt_3_400_not_active.append([time * 60 for time in cell["total_times"]])
-ttt_3_600_not_active = []
+    ttt_3_400_not_active[0].append([time * 60 for time in cell["total_times"]])
+ttt_3_400_not_active[4] = sum(sublist[0] for sublist in ttt_3_400_not_active[0]) / len(ttt_3_400_not_active[0])
+ttt_3_600_not_active = [[], results[3][600]["not_active"][0], results[3][600]["not_active"][1],
+                        results[3][600]["not_active"][2], 0]
 for cell in sorted(results[3][600]["not_active"][3], key=lambda d: min(d['total_times'])):
-    ttt_3_600_not_active.append([time * 60 for time in cell["total_times"]])
-ttt_4_400_not_active = []
+    ttt_3_600_not_active[0].append([time * 60 for time in cell["total_times"]])
+ttt_3_600_not_active[4] = sum(sublist[0] for sublist in ttt_3_600_not_active[0]) / len(ttt_3_600_not_active[0])
+ttt_4_400_not_active = [[], results[4][400]["not_active"][0], results[4][400]["not_active"][1],
+                        results[4][400]["not_active"][2], 0]
 for cell in sorted(results[4][400]["not_active"][3], key=lambda d: min(d['total_times'])):
-    ttt_4_400_not_active.append([time * 60 for time in cell["total_times"]])
-ttt_4_600_not_active = []
+    ttt_4_400_not_active[0].append([time * 60 for time in cell["total_times"]])
+ttt_4_400_not_active[4] = sum(sublist[0] for sublist in ttt_4_400_not_active[0]) / len(ttt_4_400_not_active[0])
+ttt_4_600_not_active = [[], results[4][600]["not_active"][0], results[4][600]["not_active"][1],
+                        results[4][600]["not_active"][2], 0]
 for cell in sorted(results[4][600]["not_active"][3], key=lambda d: min(d['total_times'])):
-    ttt_4_600_not_active.append([time * 60 for time in cell["total_times"]])
+    ttt_4_600_not_active[0].append([time * 60 for time in cell["total_times"]])
+ttt_4_600_not_active[4] = sum(sublist[0] for sublist in ttt_4_600_not_active[0]) / len(ttt_4_600_not_active[0])
 
 titles = [
-    "(a) Curr. Ntw. (τ=400 km, TTT=3 hrs)",
-    "(b) Curr. Ntw. (τ=600 km, TTT=3 hrs)",
-    "(c) Curr. Ntw. (τ=400 km, TTT=4 hrs)",
-    "(d) Curr. Ntw. (τ=600 km, TTT=4 hrs)",
-    "(e) Full. Ntw. (τ=400 km, TTT=3 hrs)",
-    "(f) Full. Ntw. (τ=600 km, TTT=3 hrs)",
-    "(g) Full. Ntw. (τ=400 km, TTT=4 hrs)",
-    "(h) Full. Ntw. (τ=600 km, TTT=4 hrs)",
+    "(a) Curr Ntw (τ=400 km, TTT=3 hrs)",
+    "(b) Curr Ntw (τ=600 km, TTT=3 hrs)",
+    "(c) Curr Ntw (τ=400 km, TTT=4 hrs)",
+    "(d) Curr Ntw (τ=600 km, TTT=4 hrs)",
+    "(e) Full Ntw (τ=400 km, TTT=3 hrs)",
+    "(f) Full Ntw (τ=600 km, TTT=3 hrs)",
+    "(g) Full Ntw (τ=400 km, TTT=4 hrs)",
+    "(h) Full Ntw (τ=600 km, TTT=4 hrs)",
 ]
 
 fig = make_subplots(
@@ -55,9 +67,9 @@ fig = make_subplots(
 for i, data in enumerate([ttt_3_400_active, ttt_3_600_active, ttt_4_400_active, ttt_4_600_active]):
     row = 1
     col = i + 1
-    max_len = len(data) - 1  # last x index
-    max_time = max(max(times) for times in data)
-    for k, times in enumerate(data):
+    max_len = len(data[0]) - 1  # last x index
+    max_time = max(max(times) for times in data[0])
+    for k, times in enumerate(data[0]):
         fig.add_trace(
             go.Scatter(
                 x=[k] * len(times),  # same x, multiple y values
@@ -79,7 +91,6 @@ for i, data in enumerate([ttt_3_400_active, ttt_3_600_active, ttt_4_400_active, 
         row=row,
         col=col
     )
-
     fig.add_shape(
         type="line",
         x0=0,
@@ -99,13 +110,24 @@ for i, data in enumerate([ttt_3_400_active, ttt_3_600_active, ttt_4_400_active, 
         row=row,
         col=col
     )
-
     fig.add_annotation(
         x=max_len * 0.5,
         y=max_time,
         text=f"Max TTT = {max_time:.1f} min",
         showarrow=False,
         yshift=10,
+        row=row,
+        col=col
+    )
+    fig.add_annotation(
+        x=max_len * 0.5,
+        y=50,
+        text=f"Cov Pop = {data[3] / 1e6:.1f} Mln <br> "
+             f"Cov N Cells = {data[2]} <br>"
+             f"N Chg Apts = {data[1]} <br>"
+             f"TTT Mean = {data[4]:.0f} min",
+        font=dict(size=15),
+        showarrow=False,
         row=row,
         col=col
     )
@@ -113,9 +135,9 @@ for i, data in enumerate([ttt_3_400_active, ttt_3_600_active, ttt_4_400_active, 
 for i, data in enumerate([ttt_3_400_not_active, ttt_3_600_not_active, ttt_4_400_not_active, ttt_4_600_not_active]):
     row = 2
     col = i + 1
-    max_len = len(data) - 1  # last x index
-    max_time = max(max(times) for times in data)
-    for k, times in enumerate(data):
+    max_len = len(data[0]) - 1  # last x index
+    max_time = max(max(times) for times in data[0])
+    for k, times in enumerate(data[0]):
         fig.add_trace(
             go.Scatter(
                 x=[k] * len(times),  # same x, multiple y values
@@ -137,7 +159,6 @@ for i, data in enumerate([ttt_3_400_not_active, ttt_3_600_not_active, ttt_4_400_
         row=row,
         col=col
     )
-
     fig.add_shape(
         type="line",
         x0=0,
@@ -157,7 +178,6 @@ for i, data in enumerate([ttt_3_400_not_active, ttt_3_600_not_active, ttt_4_400_
         row=row,
         col=col
     )
-
     fig.add_annotation(
         x=max_len * 0.5,
         y=max_time,
@@ -167,7 +187,18 @@ for i, data in enumerate([ttt_3_400_not_active, ttt_3_600_not_active, ttt_4_400_
         row=row,
         col=col
     )
-
+    fig.add_annotation(
+        x=max_len * 0.5,
+        y=50,
+        text=f"Cov Pop = {data[3] / 1e6:.1f} Mln <br> "
+             f"Cov N Cells = {data[2]} <br>"
+             f"N Chg Apts = {data[1]} <br>"
+             f"TTT Mean = {data[4]:.0f} min",
+        font=dict(size=15),
+        showarrow=False,
+        row=row,
+        col=col
+    )
 fig.update_yaxes(
     title_text="Total Travel Time (TTT) in minutes",
     range=[0, 280],
@@ -175,7 +206,7 @@ fig.update_yaxes(
 )
 
 fig.update_xaxes(
-    title_text="Pop. area ids (sorted by the minimum TTT)",
+    title_text="Pop area ids (sorted by the minimum TTT)",
     showgrid=True
 )
 
