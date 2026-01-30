@@ -135,7 +135,7 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int, ro
         attractive_graph = get_attractive_graph(distances=airports_distances_alt, attractive_paths=attractive_paths)
 
         _logger.info("-------------- MILP Optimization --------------")
-        for test_name in ["b&c", "kn_1", "kn_3"]:
+        for test_name in ["b&c", "kn_1", "kn_3", "kn_3_l"]:
             apply_preset(settings, "scalability_tests.yml", test_name)
 
             m, time_exec = solve_eacn_model(population_density=population_density,
@@ -155,7 +155,8 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int, ro
                                             initial_kernel_size=settings.heuristic_config.initial_kernel_size,
                                             buckets_size=settings.heuristic_config.buckets_size,
                                             iterations=settings.heuristic_config.iterations,
-                                            max_run_time=settings.model_config.max_run_time)
+                                            max_run_time=settings.model_config.max_run_time,
+                                            max_no_improv_counter=settings.heuristic_config.max_no_improv_counter)
             population_cells_covered_close_dest = [int(cell) for cells in
                                                    population_cells_too_close_to_destination_cells.values()
                                                    for cell in cells]
@@ -186,15 +187,7 @@ def scalability(tau: int, num: int, cell_x: int, cell_y: int, cell_area: int, ro
 
 
 if __name__ == "__main__":
-    scalability(num=50, cell_x=10, cell_y=10, tau=400, cell_area=4500, routing_factor_thr=1.4)
-    scalability(num=50, cell_x=10, cell_y=10, tau=600, cell_area=4500, routing_factor_thr=1.2)
-    scalability(num=50, cell_x=10, cell_y=10, tau=800, cell_area=4500, routing_factor_thr=1.2)
-    scalability(num=50, cell_x=10, cell_y=20, tau=400, cell_area=2250, routing_factor_thr=1.4)
-    scalability(num=50, cell_x=10, cell_y=20, tau=600, cell_area=2250, routing_factor_thr=1.2)
-    scalability(num=50, cell_x=10, cell_y=20, tau=800, cell_area=2250, routing_factor_thr=1.2)
-    scalability(num=100, cell_x=10, cell_y=10, tau=400, cell_area=4500, routing_factor_thr=1.4)
-    scalability(num=100, cell_x=10, cell_y=10, tau=600, cell_area=4500, routing_factor_thr=1.2)
-    scalability(num=100, cell_x=10, cell_y=10, tau=800, cell_area=4500, routing_factor_thr=1.2)
-    scalability(num=100, cell_x=10, cell_y=20, tau=400, cell_area=2250, routing_factor_thr=1.4)
-    scalability(num=100, cell_x=10, cell_y=20, tau=600, cell_area=2250, routing_factor_thr=1.2)
-    scalability(num=100, cell_x=10, cell_y=20, tau=800, cell_area=2250, routing_factor_thr=1.2)
+    scalability(num=80, cell_x=10, cell_y=10, tau=400, cell_area=4500, routing_factor_thr=1.4)
+    scalability(num=80, cell_x=10, cell_y=10, tau=600, cell_area=4500, routing_factor_thr=1.2)
+    scalability(num=80, cell_x=10, cell_y=20, tau=400, cell_area=2250, routing_factor_thr=1.4)
+    scalability(num=80, cell_x=10, cell_y=20, tau=600, cell_area=2250, routing_factor_thr=1.2)

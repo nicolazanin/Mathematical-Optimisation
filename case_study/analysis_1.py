@@ -146,7 +146,8 @@ for i in ["max_cells", "max_pop"]:
                                             initial_kernel_size=settings.heuristic_config.initial_kernel_size,
                                             buckets_size=settings.heuristic_config.buckets_size,
                                             iterations=settings.heuristic_config.iterations,
-                                            max_run_time=settings.model_config.max_run_time)
+                                            max_run_time=settings.model_config.max_run_time,
+                                            max_no_improv_counter=settings.heuristic_config.max_no_improv_counter)
             charging_airports = []
             active_path_indices = []
             population_covered = [int(cell) for cells in population_cells_too_close_to_destination_cells.values() for
@@ -186,5 +187,5 @@ for i in ["max_cells", "max_pop"]:
                                 plot_name=plot_name,
                                 save_plot=True)
 
-pickle.dumps(results)
+
 pickle.dump(results, open(BASE_DIR / 'analysis_1.pkl', 'wb'))

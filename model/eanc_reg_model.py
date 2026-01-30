@@ -13,7 +13,7 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
                      attractive_graph: nx.Graph, population_cells_paths: dict, destinations_airports_info: list,
                      tau: int, mu_1: float, mu_2: float, mip_gap: float, epsilon: int, charging_bases_lim: int,
                      lexicographic: bool, ks: bool, initial_kernel_size: int, buckets_size: int, iterations: int,
-                     max_run_time: int) -> tuple:
+                     max_run_time: int, max_no_improv_counter:int) -> tuple:
     """
     Solves the EACN model using Gurobi with the possibility to use the kernel search heuristic.
 
@@ -41,6 +41,7 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
         buckets_size (int): Kernel search heuristic buckets size.
         iterations (int): Kernel search heuristic total iterations.
         max_run_time (int): The maximum run time in seconds.
+        max_no_improv_counter (int): Maximum number of bucket iteration without improvement.
 
     Returns:
         tuple: A tuple containing the model and the optimization solution time
@@ -73,10 +74,11 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
         best_obj_constr.RHS = best_obj_val
 
         kernel = get_initial_kernel(population_cells_paths=population_cells_paths,
-                                    initial_kernel_size=initial_kernel_size)
+                                    initial_kernel_size=initial_kernel_size, activation_costs=activation_costs)
         best_obj_val = 0
         _logger.info("-------------- EACN-REG kernel search starting --------------")
         for iteration in range(iterations):
+            no_improv_counter = 0
             buckets = get_buckets(airports=attractive_airports, kernel=kernel, bucket_size=buckets_size)
             for bucket_id, bucket in buckets.items():
                 if (time.time() - start_time) < max_run_time:
@@ -94,7 +96,17 @@ def solve_eacn_model(population_density: np.ndarray, activation_costs: np.ndarra
                         charging_airports, population_covered, active_path_indices, _ = get_outputs_from_model(m)
                         kernel = kernel + [charging_airport for charging_airport in charging_airports
                                            if charging_airport not in kernel]
-                        best_obj_val = m.ObjVal
+                        if m.ObjVal > best_obj_val + 1e-3:
+                            best_obj_val = m.ObjVal
+                            no_improv_counter = 0
+                        elif m.ObjVal > 1e-3:
+                            no_improv_counter += 1
+                    else:
+                        no_improv_counter += 1
+                if no_improv_counter >= max_no_improv_counter:
+                    _logger.info("Early stopping triggered: No improvement for {} consecutive buckets".format(max_no_improv_counter))
+                    break
+
     else:
         if lexicographic:
             _logger.info("-------------- EACN-REG lexicographic order starting --------------")

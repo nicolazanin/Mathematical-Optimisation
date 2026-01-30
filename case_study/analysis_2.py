@@ -14,7 +14,7 @@ from utils.preprocessing import (get_threshold_graph, get_attractive_paths_from_
                                  get_population_cells_paths, get_population_cells_too_close_to_destination_cells,
                                  get_attractive_paths, get_attractive_graph,
                                  get_airports_too_close_to_destination_cells)
-from model.utils_model import get_outputs_from_model, get_model_variables
+from model.utils_model import get_outputs_from_model
 from model.eanc_reg_model import solve_eacn_model
 from utils.case_study_utils import (get_airports, get_population_cells, get_population_cells_centroids, plot_case_study)
 from utils.settings import settings, setup_logging
@@ -146,11 +146,13 @@ for total_time in [3, 4]:
                                             initial_kernel_size=settings.heuristic_config.initial_kernel_size,
                                             buckets_size=settings.heuristic_config.buckets_size,
                                             iterations=settings.heuristic_config.iterations,
-                                            max_run_time=settings.model_config.max_run_time)
+                                            max_run_time=settings.model_config.max_run_time,
+                                            max_no_improv_counter=settings.heuristic_config.max_no_improv_counter)
             charging_airports = []
             active_path_indices = []
             population_covered = [int(cell) for cells in population_cells_too_close_to_destination_cells.values() for
                                   cell in cells]
+            population_from_dest = []
             if m.Status in (GRB.OPTIMAL, GRB.TIME_LIMIT) and m.SolCount > 0:
                 charging_airports, population_from_dest, active_path_indices, bound = get_outputs_from_model(m)
                 population_covered = population_covered + population_from_dest
@@ -166,5 +168,5 @@ for total_time in [3, 4]:
             results[total_time][tau][network][3] = [population_cells_paths[cell] for cell in population_cells_paths if
                                                     cell in population_from_dest]
 
-pickle.dumps(results)
+
 pickle.dump(results, open(BASE_DIR / 'analysis_2.pkl', 'wb'))

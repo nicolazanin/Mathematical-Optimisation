@@ -25,6 +25,7 @@ def apply_preset(settings_to_mod: Settings, presets_path: str, test_name: str) -
     settings_to_mod.model_config.mip_gap = preset["mip_gap"]
     settings_to_mod.heuristic_config.enable = preset["enable"]
     settings_to_mod.heuristic_config.iterations = preset["iterations"]
+    settings_to_mod.heuristic_config.max_no_improv_counter = preset["max_no_improv_counter"]
 
 
 def init_results_dict() -> dict:
@@ -38,7 +39,8 @@ def init_results_dict() -> dict:
         "test": [], "N": [], "K": [], "tau": [],
         "b&c": {"rows": [], "cols": [], "obj_1": [], "obj_2": [], "bound": [], "t": []},
         "kn_1": {"obj_1": [], "obj_2": [], "bound": [], "t": []},
-        "kn_3": {"obj_1": [], "obj_2": [], "bound": [], "t": []}
+        "kn_3": {"obj_1": [], "obj_2": [], "bound": [], "t": []},
+        "kn_3_l": {"obj_1": [], "obj_2": [], "bound": [], "t": []}
     }
     return results
 
@@ -56,7 +58,7 @@ def flatten_results(results: dict) -> dict:
     # Flatten nested dictionaries into separate columns
     flattened = {key: [] for key in results if not isinstance(results[key], dict)}
 
-    for subkey in ["b&c", "kn_1", "kn_3"]:
+    for subkey in ["b&c", "kn_1", "kn_3", "kn_3_l"]:
         if subkey in results:
             for inner_key, values in results[subkey].items():
                 new_key = f"{subkey}_{inner_key}"
