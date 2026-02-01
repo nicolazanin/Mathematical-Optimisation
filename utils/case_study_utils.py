@@ -370,7 +370,7 @@ def plot_case_study(population_cells: gpd.GeoDataFrame, population_cells_centroi
             size=15,
             opacity=0.5,
         ),
-        customdata=airports_info,
+        customdata=airports_info[charging_airports],
         hovertemplate="Airport: %{customdata[1]}<br>%{customdata[0]} <extra></extra>",
         name="Charging Airports " + "🔋",
         showlegend=True,
