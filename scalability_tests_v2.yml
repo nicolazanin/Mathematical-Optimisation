@@ -1,0 +1,35 @@
+exact_method:
+  mu_1: 1
+  mu_2: 0.01
+  lexicographic: False
+  mip_gap: 0
+  enable: False
+  iterations: 0
+  max_no_improv_counter: 100
+
+kn_1:
+  mu_1: 1
+  mu_2: 0.01
+  lexicographic: False
+  mip_gap: 0.0
+  enable: True
+  iterations: 1
+  max_no_improv_counter: 100
+
+kn_3:
+  mu_1: 1
+  mu_2: 0.01
+  lexicographic: False
+  mip_gap: 0.0
+  enable: True
+  iterations: 3
+  max_no_improv_counter: 100
+
+kn_3_l:
+  mu_1: 1
+  mu_2: 0.01
+  lexicographic: False
+  mip_gap: 0.
+  enable: True
+  iterations: 3
+  max_no_improv_counter: 4
