@@ -9,15 +9,13 @@ COLORS = {
     "kn_3_l": "#d62728"  # Red
 }
 
-results = pickle.load(open('analysis_1.pkl', 'rb'))
+results = pickle.load(open('analysis_scalability_v2.pkl', 'rb'))
 
 x_axis = results["N"]
 fig = make_subplots(
-    rows=2, cols=1,
+    rows=1, cols=1,
     shared_xaxes=True,
     vertical_spacing=0.15,
-    subplot_titles=("<b>Execution Time Comparison</b>", "<b>Optimality Gap (%)</b>"),
-    row_heights=[0.6, 0.4]
 )
 
 for method in ["exact_method", "kn_1", "kn_3", "kn_3_l"]:
@@ -36,25 +34,8 @@ for method in ["exact_method", "kn_1", "kn_3", "kn_3_l"]:
         row=1, col=1
     )
 
-for method in ["exact_method", "kn_1", "kn_3", "kn_3_l"]:
-    if method == "exact_method": continue
-    if method not in results: continue
-
-    fig.add_trace(
-        go.Bar(
-            x=x_axis,
-            y=results[method]["gap_pct"],
-            name=f"{method} (Gap %)",
-            marker_color=COLORS.get(method, "gray"),
-            opacity=0.7,
-            legendgroup=method,
-            showlegend=False  # Hide duplicate legend items
-        ),
-        row=2, col=1
-    )
-
 fig.update_layout(
-    title_text="<b>EACN-REG Scalability Analysis</b>",
+    title_text="<b>EACN-REG Scalability Analysis (Execution Time Comparison)</b>",
     title_x=0.5,
     template="plotly_white",
     hovermode="x unified",
